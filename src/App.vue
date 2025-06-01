@@ -1,15 +1,26 @@
 <template>
+
+  <div id="app">
+    <nav>
+      <router-link to="/">首頁</router-link> |
+      <router-link to="/ELP">English Listening Practice</router-link>
+    </nav>
+    <router-view></router-view>
+  </div>
   <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
+
+ 
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+// import HelloWorld from './components/HelloWorld.vue'
+
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    // HelloWorld
   }
 }
 </script>
