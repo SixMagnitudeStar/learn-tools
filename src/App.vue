@@ -7,7 +7,7 @@
     </nav>
     <router-view></router-view>
   </div>
-  <img alt="Vue logo" src="./assets/logo.png">
+  <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
   <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
 
  
@@ -21,6 +21,10 @@ export default {
   name: 'App',
   components: {
     // HelloWorld
+  },
+  data(){
+    return {
+    }
   }
 }
 </script>
@@ -33,5 +37,16 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+body{
+  font-family: sans-serif;
+  background-image: url('@/assets/photo_beach.avif');
+  background-size: cover;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
 }
 </style>
