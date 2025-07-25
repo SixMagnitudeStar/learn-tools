@@ -152,6 +152,7 @@ button {
 .refresh_icon{
   height: 25px;
   width: 25px;
+  cursor: pointer;
 }
 
 
