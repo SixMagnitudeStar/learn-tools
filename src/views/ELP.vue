@@ -17,7 +17,7 @@
       <div>
         <h2>詞彙列表：</h2>
         <ul>
-          <li v-for="(vocab, index) in vocabList" :key="index">{{vocab}}</li>
+          <li v-for="(vocab, index) in vocabList" :key="index">{{vocab}}<img class="bin" src="@/assets/bin.png" @click="removeVocab(index)"></li>
         </ul>
       </div>
         <div>
@@ -63,7 +63,25 @@
       },
       reListening(){
         doReListening(this);
+      },
+
+      // 依據索引刪除詞彙列表與聆聽列表中的單字
+      removeVocab(vocabIndex){
+        // 取得要移除的單字
+        const word = this.vocabList[vocabIndex];
+
+        // 找尋找該單字是否存在於聆聽列表中，若存在的話取得找到的第一個索引 (若匹配多個也僅刪除一個)
+        const index = this.listeningList.indexOf(word);
+
+        // 如果indexOf不是返回-1 (-1代表不存在該值)，則依據匹配的索引從聆聽列表中拿掉該單字
+        if (index != -1){
+          this.listeningList.splice(index, 1);
+        }
+
+        // 將單字從詞彙列表中移除
+        this.vocabList.splice(vocabIndex, 1);
       }
+
     }
   }
 
@@ -143,6 +161,11 @@ button {
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-top: 5vw;
+}
+
+.bin{
+  height: 25px;
+  width: 25px;
 }
 
 #ListDiv{
