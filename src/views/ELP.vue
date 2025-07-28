@@ -17,7 +17,13 @@
       <div>
         <h2>詞彙列表：</h2>
         <ul>
-          <li v-for="(vocab, index) in vocabList" :key="index">{{vocab}}<img class="bin" src="@/assets/bin.png" @click="removeVocab(index)"></li>
+          <li v-for="(vocab, index) in vocabList" :key="index">{{vocab}}
+            <div class="tooltip">
+             <img class="bin" src="@/assets/bin.png" @click="removeVocab(index)" alt="delete" >
+            <span class="tooltiptext">Delete vocab</span>
+          </div>
+           
+          </li>
         </ul>
       </div>
         <div>
@@ -73,9 +79,14 @@
         // 找尋找該單字是否存在於聆聽列表中，若存在的話取得找到的第一個索引 (若匹配多個也僅刪除一個)
         const index = this.listeningList.indexOf(word);
 
-        // 如果indexOf不是返回-1 (-1代表不存在該值)，則依據匹配的索引從聆聽列表中拿掉該單字
-        if (index != -1){
-          this.listeningList.splice(index, 1);
+        if (index !== -1) {
+          // 取得陣列最後一個索引與元素
+          const lastIndex = this.listeningList.length - 1;
+          const lastWord = this.listeningList[lastIndex];
+
+          // 將目標元素與最後一個元素交換位置，然後用 pop 移除最後一個
+          this.listeningList[index] = lastWord;
+          this.listeningList.pop();
         }
 
         // 將單字從詞彙列表中移除
@@ -155,6 +166,9 @@ button {
   cursor: pointer;
 }
 
+li{
+  height: 30px;
+}
 
 #ELP-page {
   background-color: rgba(255, 255, 255, 0.8);
@@ -167,10 +181,39 @@ button {
 .bin{
   height: 25px;
   width: 25px;
+  cursor: pointer;
 }
 
 #ListDiv{
   display: flex;
 }
 
+
+
+.tooltip {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip .tooltiptext {
+  visibility: hidden;
+  background-color: black;
+  color: white;
+  text-align: center;
+  padding: 4px 8px;
+  border-radius: 4px;
+  position: absolute;
+  z-index: 1;
+  bottom: 100%; /* 顯示在上方 */
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltip:hover .tooltiptext {
+  visibility: visible;
+  opacity: 1;
+}
 </style>
