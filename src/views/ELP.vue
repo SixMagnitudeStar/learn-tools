@@ -84,7 +84,7 @@
           const lastIndex = this.listeningList.length - 1;
           const lastWord = this.listeningList[lastIndex];
 
-          // 將目標元素與最後一個元素交換位置，然後用 pop 移除最後一個
+          // 將目標元素與最後一個元素交換位置，然後用 pop 移除最後一個 (swap-and-pop(陣列中移除元素，順序若不重要可用的技巧)
           this.listeningList[index] = lastWord;
           this.listeningList.pop();
         }
