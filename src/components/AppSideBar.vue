@@ -1,13 +1,17 @@
 <template>
-  <div class="container">
-    <!-- 固定的展開按鈕 -->
+  <div id="container">
 
-    <button @click="showPanel = !showPanel" class="toggle-btn">
-      {{ showPanel ? '隱藏' : '展開' }}
-    </button>
+   <div  id="btn">
+      <button @click="showPanel = !showPanel" class="toggle-btn">
+        {{ showPanel ? '隱藏' : '展開' }}
+      </button>
+    </div>
+
     <!-- 滑出的主區塊：包含輸入與列表 -->
     <transition name="slide">
       <div v-if="showPanel" class="panel">
+      
+        <button id = 'close_btn' @click="closeSideBar">隱藏</button>
         <!-- 輸入 + Add 按鈕 -->
         <div class="input-group">
           <input v-model="newItem" placeholder="輸入文字..." />
@@ -18,18 +22,21 @@
         <ul class="item-list">
           <li v-for="(item, index) in items" :key="index">{{ item }}</li>
         </ul>
-      </div>
+        </div>
     </transition>
+    <!-- 固定的展開按鈕 -->
+
   </div>
 </template>
 <script>
 export default {
-  name: 'VocabRecordList',
+  name: 'AppSideBar',
   data() {
     return {
       newItem: '',
       items: [],
-      showPanel: false
+      showPanel: false,
+      sideBar_displayMode: 'flex'
     };
   },
   methods: {
@@ -39,22 +46,37 @@ export default {
         this.items.push(text);
         this.newItem = '';
       }
+    },
+    closeSideBar(){
+      // this.showPanel = false;
+      // this.sideBar_displayMode = 'block';
     }
+
   }
 };
 </script>
 
 
 <style scoped>
-.container {
-  display: flex;
+#container {
   position: absolute;
+  display: block;
   padding: 1rem;
+  top: 0;
+  left: 0;
 }
+
+
+#btn{
+  position: fixed;
+  height: 50px;
+  margin-left: 0;
+
+}
+
 
 /* 展開/收合按鈕 */
 .toggle-btn {
-  position: relative;
   top: 0;
   left: 0;
   z-index: 1000;
@@ -67,9 +89,10 @@ export default {
 
 /* 左側滑出的區塊 */
 .panel {
-  position: fixed;
-  top: 0;
+  position: relative;
+  top: 50px;
   left: 0;
+  margin-left: 0;
   width: 250px;
   height: 100%;
   background: #f4f4f4;
@@ -104,14 +127,24 @@ export default {
   border-bottom: 1px solid #ddd;
 }
 
+.tt{
+  display: flex;
+}
+
+
 /* 滑動動畫 */
+
+
 .slide-enter-active,
 .slide-leave-active {
-  transition: transform 0.3s ease, opacity 0.3s ease;
+  transition: transform 0.7s ease, opacity 0.7s ease;
 }
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(-100%);
   opacity: 0;
 }
+
+
+
 </style>

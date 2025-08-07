@@ -142,7 +142,7 @@
   </script>
 
 
-<style>
+<style scoped>
 
 input[type="text"] {
   padding: 10px;

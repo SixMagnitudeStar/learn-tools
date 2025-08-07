@@ -8,7 +8,7 @@
       <router-link to="/UnfamiliarWordsArea">不熟單字記錄區</router-link> |
       <router-link to="/articleReading">文章閱讀區</router-link>
     </nav>
-    <vocab-record-list></vocab-record-list>
+    <AppSideBar></AppSideBar>
     <router-view></router-view>
   </div>
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
@@ -20,12 +20,12 @@
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 
-import VocabRecordList from '@/components/VocabRecordList.vue'
+import AppSideBar from '@/components/AppSideBar.vue'
 
 export default {
   name: 'App',
   components: {
-    VocabRecordList
+    AppSideBar
     // HelloWorld
   },
   data(){

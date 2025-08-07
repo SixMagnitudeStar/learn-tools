@@ -1,12 +1,14 @@
 <template>
-  <div class="article">
-    <span
-      v-for="(word, index) in parsedWords"
-      :key="index"
-      :class="{ word: true, active: activeIndexes.includes(index) }"
-      @click="toggleWord(index)"
-      v-html="word.html"
-    ></span>
+  <div id="container">
+    <div class="article">
+      <span
+        v-for="(word, index) in parsedWords"
+        :key="index"
+        :class="{ word: true, active: activeIndexes.includes(index) }"
+        @click="toggleWord(index)"
+        v-html="word.html"
+      ></span>
+    </div>
   </div>
 </template>
 
@@ -65,6 +67,17 @@ function isWord(str) {
 
 </script>
 <style scoped>
+
+#container{
+  width: 600px;
+
+  background-color: rgba(255, 255, 255, 0.8);
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-top: 5vw;
+}
+
 .word {
   cursor: pointer;
   padding: 2px;
