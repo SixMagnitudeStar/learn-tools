@@ -74,9 +74,14 @@
       //指定語音的語言
       utterance.lang = 'en-US'; // 可改為 'zh-TW'、'ja-JP' 等
 
+
       //語音合成器物件呼叫speak method執行上面建立的語音內容物件
       speechSynthesis.speak(utterance);
   }
+
+
+
+
 
   function doRandomListening(vm){
 
