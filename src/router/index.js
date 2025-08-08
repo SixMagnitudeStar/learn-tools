@@ -2,6 +2,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/Home.vue'
 import ELPView from '../views/ELP.vue'
+import loginView from '../views/login.vue'
+import UnfamiliarWordsView from '../views/UnfamiliarWordsArea.vue'
+import articleReadingPage from '@/views/articleReading.vue'
 
 const routes = [
   {
@@ -9,7 +12,10 @@ const routes = [
     name: 'Home',
     component: HomeView
   },
-  { path: '/ELP', component: ELPView}
+  { path: '/ELP', component: ELPView},
+  { path: '/login', component: loginView},
+  { path: '/UnfamiliarWordsArea', component: UnfamiliarWordsView},
+  { path: '/articleReading', component: articleReadingPage}
   // 你可以在這裡加入更多頁面
 ]
 

@@ -3,8 +3,12 @@
   <div id="app">
     <nav>
       <router-link to="/">首頁</router-link> |
-      <router-link to="/ELP">English Listening Practice</router-link>
+      <router-link to="/ELP">English Listening Practice</router-link> |
+      <router-link to="/login">登入</router-link> |
+      <router-link to="/UnfamiliarWordsArea">不熟單字記錄區</router-link> |
+      <router-link to="/articleReading">文章閱讀區</router-link>
     </nav>
+    <AppSideBar></AppSideBar>
     <router-view></router-view>
   </div>
   <!-- <img alt="Vue logo" src="./assets/logo.png"> -->
@@ -16,10 +20,12 @@
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
 
+import AppSideBar from '@/components/AppSideBar.vue'
 
 export default {
   name: 'App',
   components: {
+    AppSideBar
     // HelloWorld
   },
   data(){
