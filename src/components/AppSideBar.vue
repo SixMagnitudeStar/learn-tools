@@ -1,10 +1,11 @@
 <template>
   <div id="container">
 
-   <div  id="btn">
-      <button @click="showPanel = !showPanel" class="toggle-btn">
+    <div  id="toggle-sidebar-btn-wrapper">
+      <!-- <button  id="toggle-sidebar-btn" @click="showPanel = !showPanel" class="toggle-btn">
         {{ showPanel ? '隱藏' : '展開' }}
-      </button>
+      </button> -->
+      <img id="toggle-sidebar-btn" :src="toggleSideBar_icon"  @click="() => { showPanel = !showPanel; switch_toggleSideIcon(); }" />
     </div>
 
     <!-- 滑出的主區塊：包含輸入與列表 -->
@@ -36,7 +37,8 @@ export default {
       newItem: '',
       items: [],
       showPanel: false,
-      sideBar_displayMode: 'flex'
+      toggleSideBar_icon : require('../assets/angle-double-left.png')
+      
     };
   },
   methods: {
@@ -50,6 +52,11 @@ export default {
     closeSideBar(){
       // this.showPanel = false;
       // this.sideBar_displayMode = 'block';
+    },
+    switch_toggleSideIcon() {
+      this.toggleSideBar_icon = this.toggleSideBar_icon === require('../assets/angle-double-right.png')
+        ? require('../assets/angle-double-left.png')
+        : require('../assets/angle-double-right.png');
     }
 
   }
@@ -67,13 +74,27 @@ export default {
 }
 
 
-#btn{
+#toggle-side-bar-wrapper{
   position: fixed;
   height: 50px;
   margin-left: 0;
+  width: 50px;
 
 }
 
+#toggle-sidebar-btn:hover {
+  background-color:lightgray;
+}
+
+#toggle-sidebar-btn{
+  width: 40px;
+  height: 40px;
+  display: block; /* 避免 inline img 底部空白 */
+  border-radius: 10px;
+
+  background-color: #f4f4f4;
+  cursor: pointer;
+}
 
 /* 展開/收合按鈕 */
 .toggle-btn {
@@ -100,6 +121,8 @@ export default {
   padding: 1rem;
   box-shadow: 2px 0 5px rgba(0,0,0,0.1);
   z-index: 999;
+
+  border-radius: 10px;
 }
 
 .input-group {
