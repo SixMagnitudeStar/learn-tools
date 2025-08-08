@@ -1,6 +1,19 @@
 <template>
   <div id="container">
-    <div class="article">
+    <div >
+      <ul class="article-list">
+        <li>訊息 1</li>
+        <li>訊息 2</li>
+        <li>訊息 3</li>
+      </ul>
+    </div>
+    <div class="article-content"   contenteditable="true">
+      <h1 class="article-title"
+          @input="articleTitleChange"
+          :innerText="articleTitle"
+          ref="editableTitle"
+          spellcheck="false"
+      >文章標題</h1>
       <span
         v-for="(word, index) in parsedWords"
         :key="index"
@@ -13,12 +26,17 @@
 </template>
 
 <script setup>
-import { ref, computed  } from 'vue'
+import { ref, computed, onMounted, watch  } from 'vue'
 
 /* global defineOptions */
 defineOptions({
   name: 'articleReadingPage'
 })
+
+
+const editableTitle = ref(null);
+
+const articleTitle = ref('暫無標題');
 
 
 // 原始文字內容（可從 API 傳入）
@@ -40,6 +58,14 @@ const parsedWords = computed(() => {
     return { html: word, clickable: true }
   })
 })
+
+
+// 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
+function articleTitleChange(e){
+  articleTitle.value = e.target.innerText
+}
+
+
 
 // 切換某個單字的高亮狀態
 function toggleWord(index) {
@@ -65,17 +91,36 @@ function isWord(str) {
 }
 
 
+onMounted(()=>{
+  
+// 頁面載入時同步 文章標題的innerText
+  if (editableTitle.value){
+    editableTitle.value.innerText = articleTitle.value;
+  }
+})
+
+
+// 同步外部改變時也更新 editable div 內容（避免虛擬DOM覆蓋）
+watch(articleTitle, (newVal) => {
+  if (editableTitle.value && editableTitle.value.innerText !== newVal) {
+    editableTitle.value.innerText = newVal
+  }
+})
+
 </script>
 <style scoped>
 
 #container{
-  width: 600px;
+  width: 60vw;
+  height: 60vh;
 
   background-color: rgba(255, 255, 255, 0.8);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-top: 5vw;
+
+  display: flex;
 }
 
 .word {
@@ -87,8 +132,37 @@ function isWord(str) {
   color: red;
   font-weight: bold;
 }
-.article{
-    width: 300px;
+.article-content{
+    width: 50vw;
     text-align: left;
+
+    margin-left: 30px;
+    border: none;
+    outline: none;
 }
+
+.article-list{
+  width: 150px;
+  background-color: aquamarine;
+  height: auto;
+
+  list-style: none;        /* 移除前面的圓點 */
+  padding: 0;
+  margin: 0;
+  border: 1px solid #ccc;  /* 外框 */
+  border-radius: 6px;
+  overflow: auto;        /* 讓邊框收齊 */
+} 
+
+.article-list li {
+  padding: 10px;
+  border-bottom: 1px solid #ccc;
+}
+
+.article-list li:last-child {
+  border-bottom: none; /* 最後一項不要下邊框 */
+}
+
+
+
 </style>
