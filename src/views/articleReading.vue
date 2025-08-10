@@ -1,9 +1,13 @@
 <template>
   <div id="container">
     <div >
+      <span class="iconBox">
+        <img  class="icon" src="../assets/plus.png" alt="建立文章">
+        <img  class="icon" src="../assets/random.png" alt="隨機生成文章ˊ">
+      </span>
       <ul class="article-list">
         <li>訊息 1</li>
-        <li>訊息 2</li>
+        <li>訊息 aaaaaaaaaaaaaaaaaaaaaaaaaaa2</li>
         <li>訊息 3</li>
       </ul>
     </div>
@@ -143,7 +147,8 @@ watch(articleTitle, (newVal) => {
 
 .article-list{
   width: 150px;
-  background-color: aquamarine;
+  /* background-color: #F0F0F0; */
+  background-color: rgba(240, 240, 240, 5); /* 背景半透明 */
   height: auto;
 
   list-style: none;        /* 移除前面的圓點 */
@@ -157,10 +162,26 @@ watch(articleTitle, (newVal) => {
 .article-list li {
   padding: 10px;
   border-bottom: 1px solid #ccc;
+
+  overflow: hidden;           /* 超出隱藏 */
+  text-overflow: ellipsis;    /* 顯示省略號 */
 }
 
 .article-list li:last-child {
   border-bottom: none; /* 最後一項不要下邊框 */
+}
+
+
+.icon{
+  width: 25px;
+  height: 25px;
+  display: block;
+  
+}
+
+.iconBox{
+  display: flex;
+  margin: 5px;
 }
 
 
