@@ -2,19 +2,20 @@
   <div id="container">
     <div >
       <span class="iconBox">
-        <img  class="icon" src="../assets/plus.png" alt="建立文章">
+        <img @click="createNewArticle" class="icon" src="../assets/plus.png" alt="建立文章">
         <img  class="icon" src="../assets/random.png" alt="隨機生成文章ˊ">
       </span>
       <ul class="article-list">
-        <li>訊息 1</li>
-        <li>訊息 aaaaaaaaaaaaaaaaaaaaaaaaaaa2</li>
-        <li>訊息 3</li>
+        <li v-for="title in articles" v-bind:key="title">{{title}}</li>
       </ul>
     </div>
-    <div class="article-content"   contenteditable="true">
+
+    <div class="article-content" >
       <h1 class="article-title"
+          contenteditable="true"
+
           @input="articleTitleChange"
-          :innerText="articleTitle"
+          @blur="onArticleTitleBlur"
           ref="editableTitle"
           spellcheck="false"
       >文章標題</h1>
@@ -30,7 +31,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch  } from 'vue'
+import { ref, computed, onMounted, watch, reactive  } from 'vue'
 
 /* global defineOptions */
 defineOptions({
@@ -41,6 +42,10 @@ defineOptions({
 const editableTitle = ref(null);
 
 const articleTitle = ref('暫無標題');
+
+const articles = reactive([]);
+
+articles.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
 
 // 原始文字內容（可從 API 傳入）
@@ -66,9 +71,31 @@ const parsedWords = computed(() => {
 
 // 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
 function articleTitleChange(e){
-  articleTitle.value = e.target.innerText
+  articleTitle.value = e.target.innerText;
+
 }
 
+
+function onArticleTitleBlur(){
+  if (articleTitle.value.trim() == ''){
+    articleTitle.value = '暫無標題';
+  
+  }
+}
+
+
+function createNewArticle(){
+  //
+  articles.unshift('new message');
+}
+
+// function onBlur(event) {
+//   if (articleTitle.value.trim() === '') {
+//     articleTitle.value = '暫無標題'
+//     event.target.innerText = articleTitle.value
+//   }
+//   console.log('blur 觸發', articleTitle.value)
+// }
 
 
 // 切換某個單字的高亮狀態
@@ -145,6 +172,12 @@ watch(articleTitle, (newVal) => {
     outline: none;
 }
 
+.article-title{
+    border: none;
+    outline: none;  
+}
+
+
 .article-list{
   width: 150px;
   /* background-color: #F0F0F0; */
@@ -176,6 +209,7 @@ watch(articleTitle, (newVal) => {
   width: 25px;
   height: 25px;
   display: block;
+  cursor: pointer;
   
 }
 
