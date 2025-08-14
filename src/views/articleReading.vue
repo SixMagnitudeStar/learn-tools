@@ -2,20 +2,31 @@
   <div id="container">
     <div >
       <span class="iconBox">
-        <img @click="createNewArticle" class="icon" src="../assets/plus.png" alt="建立文章">
-        <img  class="icon" src="../assets/random.png" alt="隨機生成文章ˊ">
+        <div class="tooltip">
+          <img @click="createNewArticle" class="icon" src="../assets/plus.png" alt="建立文章" title="建立文章"/>
+          <div class="tooltip-text">建立文章</div>
+        </div>
+        
+        <div class="tooltip">
+          <img  class="icon" src="../assets/random.png" alt="隨機生成文章" title="隨機生成文章">
+          <div class="tooltip-text">隨機一篇生成文章</div>
+        </div>
+        
       </span>
       <ul class="article-list">
-        <li v-for="title in articles" v-bind:key="title">{{title}}</li>
+        <li v-for="(title,index) in articles" 
+        v-bind:key="index"
+        :class="{selected: selectedIndex === index}"
+        @click="selectedIndex=index"
+        >{{title}}</li>
       </ul>
     </div>
 
     <div class="article-content" >
       <h1 class="article-title"
           contenteditable="true"
-
+          placeholder="5sss"
           @input="articleTitleChange"
-          @blur="onArticleTitleBlur"
           ref="editableTitle"
           spellcheck="false"
       >文章標題</h1>
@@ -27,7 +38,20 @@
         v-html="word.html"
       ></span>
     </div>
+
+    <div class="note-div">
+      <div class="record-words-area">
+
+      </div>
+      <div class="note-area" contenteditable="true">
+
+      </div>
+    </div>
+
+
   </div>
+
+
 </template>
 
 <script setup>
@@ -41,16 +65,19 @@ defineOptions({
 
 const editableTitle = ref(null);
 
-const articleTitle = ref('暫無標題');
+const articleTitle = ref('');
 
 const articles = reactive([]);
+const selectedIndex = ref(null); // 記錄被選中的 li
 
 articles.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
 
 // 原始文字內容（可從 API 傳入）
-const text = ref(`React (also known as React.js or ReactJS) is a free and open-source
-front-end JavaScript library for 。，building user interfaces (UIs).`)
+// const text = ref(`React (also known as React.js or ReactJS) is a free and open-source
+// front-end JavaScript library for 。，building user interfaces (UIs).`)
+
+const text = ref('')  // 初始為空字串
 
 // 記錄被點擊的詞索引
 const activeIndexes = ref([])
@@ -58,7 +85,8 @@ const activeIndexes = ref([])
 
 // 將文字斷詞，包進 HTML 結構
 const parsedWords = computed(() => {
-  const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
+  // const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
+  const words = (text.value || '').match(/\s+|\w+|[^\w\s]/g) || []
 
   return words.map((word) => {
     if ((word.trim() === '') || (!isWord(word))){
@@ -76,17 +104,11 @@ function articleTitleChange(e){
 }
 
 
-function onArticleTitleBlur(){
-  if (articleTitle.value.trim() == ''){
-    articleTitle.value = '暫無標題';
-  
-  }
-}
-
 
 function createNewArticle(){
   //
   articles.unshift('new message');
+  editableTitle.value.focus();
 }
 
 // function onBlur(event) {
@@ -122,12 +144,32 @@ function isWord(str) {
 }
 
 
+// 封裝 API 請求
+async function fetchTextFromAPI() {
+  try {
+    const topic = encodeURIComponent('AI in education')
+    const wordLimit = 200
+    const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
+
+    const res = await fetch(url)
+    const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
+
+    articleTitle.value = data.topic;
+    text.value = data.essay;     // 將 API 回傳文字設定給 ref
+  } catch (err) {
+    console.error(err)
+  }
+}
+
+
 onMounted(()=>{
   
 // 頁面載入時同步 文章標題的innerText
   if (editableTitle.value){
     editableTitle.value.innerText = articleTitle.value;
   }
+
+  fetchTextFromAPI();
 })
 
 
@@ -137,6 +179,11 @@ watch(articleTitle, (newVal) => {
     editableTitle.value.innerText = newVal
   }
 })
+
+
+
+
+
 
 </script>
 <style scoped>
@@ -174,9 +221,13 @@ watch(articleTitle, (newVal) => {
 
 .article-title{
     border: none;
-    outline: none;  
 }
 
+.article-title:empty::before {
+  content: "輸入文章標題…";
+  color: #aaa;
+  pointer-events: none; /* 避免遮住點擊 */
+}
 
 .article-list{
   width: 150px;
@@ -200,10 +251,43 @@ watch(articleTitle, (newVal) => {
   text-overflow: ellipsis;    /* 顯示省略號 */
 }
 
+.article-list li.selected {
+  background-color: #ddd; /* 反灰 */
+}
+
 .article-list li:last-child {
   border-bottom: none; /* 最後一項不要下邊框 */
 }
 
+
+.note-div{
+  width: 300px;
+  height: 100%;
+  border-radius: 6px;
+}
+
+
+.note-div .record-words-area{
+  height: 50%;
+  /* width: auto; */
+}
+
+.note-div .note-area{
+  height: 50%;
+  /* border: none; */
+  text-align: left;
+}
+
+.note-div div{
+  background-color: rgba(240, 240, 240, 5); /* 背景半透明 */
+  border: 1px solid #ccc;   /*外框 */
+  overflow: auto;        /* 讓邊框收齊 */
+}
+
+
+[contenteditable='true']{
+  outline: none;
+}
 
 .icon{
   width: 25px;

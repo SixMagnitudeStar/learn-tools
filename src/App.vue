@@ -55,4 +55,45 @@ body{
   min-height: 100vh;
   margin: 0;
 }
+
+
+
+
+/* 訊息提示框 */
+.tooltip {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+}
+
+.tooltip .tooltip-text {
+  visibility: hidden;
+  background-color: #333;
+  color: #fff;
+  text-align: center;
+  padding: 6px 10px;
+  border-radius: 6px;
+  position: absolute;
+  bottom: 125%; /* 在元素上方 */
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  z-index: 10;
+}
+
+.tooltip .tooltip-text::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color:  #333 transparent transparent transparent;
+  /* border-color: transparent #333 #333 #333; */
+}
+
+.tooltip:hover .tooltip-text {
+  visibility: visible;
+}
 </style>
