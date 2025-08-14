@@ -8,7 +8,7 @@
         </div>
         
         <div class="tooltip">
-          <img  class="icon" src="../assets/random.png" alt="隨機生成文章" title="隨機生成文章">
+          <img @click="fetchTextFromAPI()" class="icon" src="../assets/random.png" alt="隨機生成文章" title="隨機生成文章">
           <div class="tooltip-text">隨機一篇生成文章</div>
         </div>
         
@@ -169,7 +169,7 @@ onMounted(()=>{
     editableTitle.value.innerText = articleTitle.value;
   }
 
-  fetchTextFromAPI();
+  // fetchTextFromAPI();
 })
 
 
