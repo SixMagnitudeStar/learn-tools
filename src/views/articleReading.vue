@@ -161,8 +161,10 @@ async function fetchTextFromAPI() {
   }
 }
 
-
+//  import { useAuthStore } from '@/stores/auth'
 onMounted(()=>{
+
+  // const auth = useAuthStore()
   
 // 頁面載入時同步 文章標題的innerText
   if (editableTitle.value){
