@@ -14,11 +14,11 @@
         
       </span>
       <ul class="article-list">
-        <li v-for="(title,index) in articles" 
+        <li v-for="(article,index) in articles" 
         v-bind:key="index"
         :class="{selected: selectedIndex === index}"
-        @click="selectedIndex=index"
-        >{{title}}</li>
+        @click="selectArticle(index)"
+        >{{ article.title || '未命名文章' }}</li>
       </ul>
     </div>
 
@@ -47,15 +47,12 @@
 
       </div>
     </div>
-
-
   </div>
-
-
 </template>
 
 <script setup>
 import { ref, computed, onMounted, watch, reactive  } from 'vue'
+import { useAuthStore } from '@/auth.js'
 
 /* global defineOptions */
 defineOptions({
@@ -63,14 +60,16 @@ defineOptions({
 })
 
 
+const auth = useAuthStore()
+
 const editableTitle = ref(null);
 
 const articleTitle = ref('');
 
-const articles = reactive([]);
+const articles = reactive([])  // reactive 陣列
 const selectedIndex = ref(null); // 記錄被選中的 li
 
-articles.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
+// articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
 
 // 原始文字內容（可從 API 傳入）
@@ -143,6 +142,12 @@ function isWord(str) {
   return [...str].every(char => isTextChar(char))
 }
 
+function selectArticle(index){
+  selectedIndex.value=index;
+  text.value = articles[index].content;
+  articleTitle.value = articles[index].title;
+}
+
 
 // 封裝 API 請求
 async function fetchTextFromAPI() {
@@ -161,8 +166,26 @@ async function fetchTextFromAPI() {
   }
 }
 
+import axios from 'axios'
+
+async function getArticles() {
+  try {
+    const response = await axios.get('http://127.0.0.1:8000/articles', {
+      headers: {
+        Authorization: `Bearer ${auth.token}`
+      }
+    })
+    console.log('文章資料:', response.data.articles)
+
+    return response.data.articles
+  } catch (error) {
+    console.error('取得文章失敗:', error)
+
+  }
+}
+
 //  import { useAuthStore } from '@/stores/auth'
-onMounted(()=>{
+onMounted(async ()=>{
 
   // const auth = useAuthStore()
   
@@ -171,6 +194,10 @@ onMounted(()=>{
     editableTitle.value.innerText = articleTitle.value;
   }
 
+
+  const fetched = await getArticles()
+  articles.push(...fetched)  // 展開陣列
+  
   // fetchTextFromAPI();
 })
 
@@ -181,10 +208,6 @@ watch(articleTitle, (newVal) => {
     editableTitle.value.innerText = newVal
   }
 })
-
-
-
-
 
 
 </script>

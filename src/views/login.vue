@@ -2,7 +2,7 @@
     <div class="login-container">
     <h1>Login</h1>
     <!-- <form> -->
-        <input type="text" placeholder="Username" v-model="username" required>
+        <input type="text" placeholder="Username" v-model="username" required >
         <input type="password" placeholder="Password"  v-model="password" required>
         <!-- <button type="submit" @click="login">Login</button> -->
         <button type="button" @click="login">Login</button>
@@ -10,44 +10,78 @@
     <!-- </form> -->
     </div>
 </template>
+
+<script>
+export default {
+  name: 'LoginView' // 使用多单词名称
+}
+</script>
+
 <script setup>
-// export default{
-//     name : 'loginView'
-// }
-defineOptions({
-  name: 'loginView'
-})
-
-
 import { ref } from 'vue'
 import { useAuthStore } from '@/auth.js'
-import axios from 'axios'
+// import axios from 'axios'
 import { useRouter } from 'vue-router'  // <-- 匯入 router
+
+import api from '@/axios.js'
+
+
+// import { defineOptions } from 'vue'
+
+
+// defineOptions({
+//   name: 'loginView'
+// })
+
+// alert(process.env.VUE_APP_API_BASE);
+
 
 const username = ref('')
 const password = ref('')
+
+username.value='plaisir963'
+password.value='yuizxc789'
+
 const error = ref('')
 
 const auth = useAuthStore()
 const router = useRouter()  // <-- 取得 router 實例
 
+// async function login() {
+//   try {
+
+//     const response = await axios.post(baseurl + '/login', {
+//       username: username.value,
+//       password: password.value
+//     })
+//     // 假設 API 回傳格式 { token: "abc123" }
+//     auth.setToken(response.data.token)
+//     error.value = ''
+//     alert('Login successful! Token saved.')
+//     router.push('/articleReading')
+//   } catch (err) {
+//     console.error(err)
+//     error.value = 'Login failed'
+//   }
+// }
 async function login() {
+  alert(process.env.VUE_APP_API_BASE);
   try {
-    const response = await axios.post('http://127.0.0.1:8000/login', {
+    const response = await api.post('/login', {
       username: username.value,
       password: password.value
     })
-    // 假設 API 回傳格式 { token: "abc123" }
-    auth.setToken(response.data.token)
+    auth.setToken(response.data.access_token)
+
     error.value = ''
-    alert('Login successful! Token saved.')
+    console.log('chk'+JSON.stringify(response.data))
     router.push('/articleReading')
+    // router.push({ name: 'articleReading' })
   } catch (err) {
     console.error(err)
     error.value = 'Login failed'
   }
 }
-
 
 </script>
 
