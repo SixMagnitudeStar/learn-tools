@@ -11,14 +11,17 @@
           <img @click="fetchTextFromAPI()" class="icon" src="../assets/random.png" alt="隨機生成文章" title="隨機生成文章">
           <div class="tooltip-text">隨機一篇生成文章</div>
         </div>
-        
+        <div class="tooltip">
+          <img @click="saveArticleAPI()" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
+          <div class="tooltip-text">儲存文章</div>
+        </div>
       </span>
       <ul class="article-list">
         <li v-for="(article,index) in articles" 
         v-bind:key="index"
         :class="{selected: selectedIndex === index}"
         @click="selectArticle(index)"
-        >{{ article.title || '未命名文章' }}</li>
+        >{{ article.title  || '未命名文章' }}</li>
       </ul>
     </div>
 
@@ -40,12 +43,18 @@
     </div>
 
     <div class="note-div">
-      <div class="record-words-area">
 
-      </div>
-      <div class="note-area" contenteditable="true">
+      <details open>
+        <summary></summary>
+        <div class="record-words-area"></div>
+      </details>
 
-      </div>
+      <details>
+        <summary>筆記</summary>
+        <div class="note-area" contenteditable="true"></div>
+      </details>
+
+
     </div>
   </div>
 </template>
@@ -53,6 +62,8 @@
 <script setup>
 import { ref, computed, onMounted, watch, reactive  } from 'vue'
 import { useAuthStore } from '@/auth.js'
+
+import api from '@/axios.js'
 
 /* global defineOptions */
 defineOptions({
@@ -62,12 +73,24 @@ defineOptions({
 
 const auth = useAuthStore()
 
+
+const selectedArticle = reactive({
+  'id': 0,
+  'title': '',
+  'content': '',
+  'tags_css': []
+})
+
+
+
+
 const editableTitle = ref(null);
 
-const articleTitle = ref('');
+// const articleTitle = ref('');
 
 const articles = reactive([])  // reactive 陣列
-const selectedIndex = ref(null); // 記錄被選中的 li
+const selectedIndex = ref(0); // 記錄被選中的 li
+
 
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
@@ -76,7 +99,7 @@ const selectedIndex = ref(null); // 記錄被選中的 li
 // const text = ref(`React (also known as React.js or ReactJS) is a free and open-source
 // front-end JavaScript library for 。，building user interfaces (UIs).`)
 
-const text = ref('')  // 初始為空字串
+//const text = ref('')  // 初始為空字串
 
 // 記錄被點擊的詞索引
 const activeIndexes = ref([])
@@ -85,8 +108,8 @@ const activeIndexes = ref([])
 // 將文字斷詞，包進 HTML 結構
 const parsedWords = computed(() => {
   // const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
-  const words = (text.value || '').match(/\s+|\w+|[^\w\s]/g) || []
-
+  // const words = (text.value || '').match(/\s+|\w+|[^\w\s]/g) || []
+  const words = (selectedArticle.content || '').match(/\s+|\w+|[^\w\s]/g) || []
   return words.map((word) => {
     if ((word.trim() === '') || (!isWord(word))){
       return { html: word, clickable: false } // 空白原樣回傳
@@ -98,15 +121,22 @@ const parsedWords = computed(() => {
 
 // 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
 function articleTitleChange(e){
-  articleTitle.value = e.target.innerText;
-
+//  articleTitle.value = e.target.innerText;
+  selectedArticle.title = e.target.innerText;
 }
 
 
 
 function createNewArticle(){
   //
-  articles.unshift('new message');
+  articles.unshift({
+    id: articles.length+1,
+    title: '',
+    content: '',
+    tags_css: []
+  });
+
+  selectArticle(0);
   editableTitle.value.focus();
 }
 
@@ -144,8 +174,11 @@ function isWord(str) {
 
 function selectArticle(index){
   selectedIndex.value=index;
-  text.value = articles[index].content;
-  articleTitle.value = articles[index].title;
+  Object.assign(selectedArticle,articles[index]);
+  alert(selectedArticle.title);
+//  alert(JSON.stringify(selectedArticle))
+  //text.value = articles[index].content;
+// articleTitle.value = articles[index].title;
 }
 
 
@@ -159,8 +192,17 @@ async function fetchTextFromAPI() {
     const res = await fetch(url)
     const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
 
-    articleTitle.value = data.topic;
-    text.value = data.essay;     // 將 API 回傳文字設定給 ref
+    const id = articles.length +1
+    articles.unshift({
+      'id': id,
+      'title': data.topic,
+      'content': data.essay,
+      'tags_css': []
+    });
+
+    Object.assign(selectedArticle, articles[0]);
+    //articleTitle.value = data.topic;
+    // text.value = data.essay;     // 將 API 回傳文字設定給 ref
   } catch (err) {
     console.error(err)
   }
@@ -177,6 +219,8 @@ async function getArticles() {
     })
     console.log('文章資料:', response.data.articles)
 
+    alert(JSON.stringify(response.data.articles))
+
     return response.data.articles
   } catch (error) {
     console.error('取得文章失敗:', error)
@@ -184,28 +228,85 @@ async function getArticles() {
   }
 }
 
+
+// async function saveArticleAPI() {
+//   alert('進入');
+//   try {
+//     const response = await api.post('/article', {
+//       title: articles[selectedIndex].title,
+//       content: articles[selectedIndex].content
+//     },{
+//       headers: {
+//         Authorization: `Bearer ${auth.token}`
+//       }
+//     })
+//     alert('try');
+//     console.log('chk'+JSON.stringify(response.data))
+//     // router.push({ name: 'articleReading' })
+//   } catch (err) {
+//     alert('error')
+//     console.error(err)
+//   }
+// }
+async function saveArticleAPI() {
+  alert('進入')
+
+  try {
+    const response = await api.post(
+      '/article',
+      {
+        title: selectedArticle.title,
+        content: selectedArticle.content,
+        tags_css: selectedArticle.tags_css
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${auth.token}`
+        }
+      }
+    )
+
+    alert('try')
+    console.log('chk', response.data)
+    // router.push({ name: 'articleReading' })
+  } catch (err) {
+    alert('error')
+    console.error(err)
+  }
+}
 //  import { useAuthStore } from '@/stores/auth'
 onMounted(async ()=>{
 
   // const auth = useAuthStore()
   
 // 頁面載入時同步 文章標題的innerText
-  if (editableTitle.value){
-    editableTitle.value.innerText = articleTitle.value;
-  }
+  // if (editableTitle.value){
+  //   editableTitle.value.innerText = articleTitle.value;
+  // }
+
+
 
 
   const fetched = await getArticles()
   articles.push(...fetched)  // 展開陣列
+  // if (articles.length>0){
+  //   text.value = articles[0].content
+  // }
   
   // fetchTextFromAPI();
 })
 
 
 // 同步外部改變時也更新 editable div 內容（避免虛擬DOM覆蓋）
-watch(articleTitle, (newVal) => {
-  if (editableTitle.value && editableTitle.value.innerText !== newVal) {
-    editableTitle.value.innerText = newVal
+// watch(articleTitle, (newVal) => {
+//   if (editableTitle.value && editableTitle.value.innerText !== newVal) {
+//     editableTitle.value.innerText = newVal
+//   }
+// })
+
+watch(selectedArticle, (newItem) => {
+  if (editableTitle.value && editableTitle.value.innerText !== newItem.title){
+    editableTitle.value.innerText = newItem.title;
   }
 })
 
@@ -292,14 +393,18 @@ watch(articleTitle, (newVal) => {
 }
 
 
+
+
 .note-div .record-words-area{
-  height: 50%;
+  height: 200px;
+  display: block;
   /* width: auto; */
 }
 
 .note-div .note-area{
-  height: 50%;
+  height: 300px;
   /* border: none; */
+  display: block;
   text-align: left;
 }
 
