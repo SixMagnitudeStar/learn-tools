@@ -32,11 +32,14 @@
           @input="articleTitleChange"
           ref="editableTitle"
           spellcheck="false"
-      >文章標題</h1>
+      ></h1>
       <span
         v-for="(word, index) in parsedWords"
         :key="index"
-        :class="{ word: true, active: activeIndexes.includes(index) }"
+        :class="{ 
+          word: true, 
+          active: selectedArticle.tags_css.some(item => item.index === String(index)) 
+        }"
         @click="toggleWord(index)"
         v-html="word.html"
       ></span>
@@ -60,7 +63,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch, reactive  } from 'vue'
+import { ref, computed, onMounted, watch, reactive, nextTick  } from 'vue'
 import { useAuthStore } from '@/auth.js'
 
 import api from '@/axios.js'
@@ -91,6 +94,8 @@ const editableTitle = ref(null);
 const articles = reactive([])  // reactive 陣列
 const selectedIndex = ref(0); // 記錄被選中的 li
 
+const newArticle_id = reactive([]) // 紀錄新增文章的id
+
 
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
@@ -102,8 +107,11 @@ const selectedIndex = ref(0); // 記錄被選中的 li
 //const text = ref('')  // 初始為空字串
 
 // 記錄被點擊的詞索引
-const activeIndexes = ref([])
+// const activeIndexes = ref([])
 //activeIndexes.value = [1, 3]
+
+
+// const text = ref('');
 
 // 將文字斷詞，包進 HTML 結構
 const parsedWords = computed(() => {
@@ -153,13 +161,26 @@ function createNewArticle(){
 function toggleWord(index) {
   if (!parsedWords.value[index].clickable) return
 
-  const i = activeIndexes.value.indexOf(index)
-  if (i === -1) {
-    activeIndexes.value.push(index)
-  } else {
-    activeIndexes.value.splice(i, 1)
+  if (!selectedArticle) return
+
+  const i = String(index);
+
+  // const i = activeIndexes.value.indexOf(index)
+  // if (i === -1) {
+  //   activeIndexes.value.push(index)
+  // } else {
+  //   activeIndexes.value.splice(i, 1)
+  // }
+
+  const found = selectedArticle.tags_css.find(item => item.index === i)
+  if (!found){
+    selectedArticle.tags_css.push({'index':i})
+  }else{
+    selectedArticle.tags_css = selectedArticle.tags_css.filter(item => item.index !== i)
   }
 }
+
+
 
 // 判斷是不是字元(單一字元)
 function isTextChar(char) {
@@ -173,9 +194,9 @@ function isWord(str) {
 }
 
 function selectArticle(index){
+  alert(index);
   selectedIndex.value=index;
   Object.assign(selectedArticle,articles[index]);
-  alert(selectedArticle.title);
 //  alert(JSON.stringify(selectedArticle))
   //text.value = articles[index].content;
 // articleTitle.value = articles[index].title;
@@ -183,32 +204,40 @@ function selectArticle(index){
 
 
 // 封裝 API 請求
-async function fetchTextFromAPI() {
-  try {
-    const topic = encodeURIComponent('AI in education')
-    const wordLimit = 200
-    const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
+// async function fetchTextFromAPI() {
+//   try {
+//     alert('呼叫')
+//     const topic = encodeURIComponent('AI in education')
+//     const wordLimit = 200
+//     const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
 
-    const res = await fetch(url)
-    const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
+//     const res = await fetch(url)
+//     const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
 
-    const id = articles.length +1
-    articles.unshift({
-      'id': id,
-      'title': data.topic,
-      'content': data.essay,
-      'tags_css': []
-    });
+//     const id = articles.length +1
+//     articles.unshift({
+//       'id': id,
+//       'title': data.topic,
+//       'content': data.essay,
+//       'tags_css': []
+//     });
 
-    Object.assign(selectedArticle, articles[0]);
-    //articleTitle.value = data.topic;
-    // text.value = data.essay;     // 將 API 回傳文字設定給 ref
-  } catch (err) {
-    console.error(err)
-  }
-}
+//    // Object.assign(selectedArticle, articles[0]);
+//      // 資料更新完成後再選第一個
+//     this.$nextTick(() => {
+//       this.selectArticle(0)
+//     })
+
+// //    selectedArticle.tags_css[1,3]
+//     //articleTitle.value = data.topic;
+//     // text.value = data.essay;     // 將 API 回傳文字設定給 ref
+//   } catch (err) {
+//     console.error(err)
+//   }
+// }
 
 import axios from 'axios'
+// import { indexOf } from 'core-js/core/array'
 
 async function getArticles() {
   try {
@@ -218,8 +247,6 @@ async function getArticles() {
       }
     })
     console.log('文章資料:', response.data.articles)
-
-    alert(JSON.stringify(response.data.articles))
 
     return response.data.articles
   } catch (error) {
@@ -249,30 +276,64 @@ async function getArticles() {
 //   }
 // }
 async function saveArticleAPI() {
-  alert('進入')
 
-  try {
-    const response = await api.post(
-      '/article',
-      {
-        title: selectedArticle.title,
-        content: selectedArticle.content,
-        tags_css: selectedArticle.tags_css
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${auth.token}`
-        }
-      }
-    )
 
-    alert('try')
+  const body = {
+    id: selectedArticle.id,
+    title: selectedArticle.title,
+    content: selectedArticle.content,
+      tags_css: selectedArticle.tags_css.map(item => ({
+    index: String(item.index)
+  }))
+  }
+  
+  const headers = {
+    Authorization: `Bearer ${auth.token}`
+  }
+
+    alert('查看:'+JSON.stringify(body));
+  try{
+    
+    let response
+    const i = newArticle_id.indexOf(body.id);
+
+    if (i!=-1){
+      alert('post');
+      response = await api.post('/article', body, { headers: headers })
+    
+    }else{
+      alert('put');
+      response = await api.put(`/article/${body.id}`, body, { headers })
+   
+    }
+
     console.log('chk', response.data)
-    // router.push({ name: 'articleReading' })
-  } catch (err) {
-    alert('error')
+  } catch(err){
+    console.error('422 details:', err.response?.data?.detail)
     console.error(err)
   }
+
+
+  // try {
+  //   const response = await api.post(
+  //     '/article',
+  //     {
+  //       title: selectedArticle.title,
+  //       content: selectedArticle.content,
+  //       tags_css: selectedArticle.tags_css
+  //     },
+  //     {
+  //       headers: {
+  //         Authorization: `Bearer ${auth.token}`
+  //       }
+  //     }
+  //   )
+
+  //   console.log('chk', response.data)
+  //   // router.push({ name: 'articleReading' })
+  // } catch (err) {
+  //   console.error(err)
+  // }
 }
 //  import { useAuthStore } from '@/stores/auth'
 onMounted(async ()=>{
@@ -289,6 +350,11 @@ onMounted(async ()=>{
 
   const fetched = await getArticles()
   articles.push(...fetched)  // 展開陣列
+
+  await nextTick()
+  selectArticle(0)
+  selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
+
   // if (articles.length>0){
   //   text.value = articles[0].content
   // }
@@ -308,6 +374,10 @@ watch(selectedArticle, (newItem) => {
   if (editableTitle.value && editableTitle.value.innerText !== newItem.title){
     editableTitle.value.innerText = newItem.title;
   }
+
+  // if (text.value != newItem.content){
+  //   text.value = newItem.content;
+  // }
 })
 
 
