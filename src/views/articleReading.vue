@@ -409,7 +409,7 @@ watch(selectedArticle, (newItem) => {
 .article-content{
     width: 50vw;
     text-align: left;
-
+    font-size: 24px;
     margin-left: 30px;
     border: none;
     outline: none;
