@@ -48,8 +48,17 @@
     <div class="note-div">
 
       <details open>
-        <summary></summary>
-        <div class="record-words-area"></div>
+        <summary>不熟悉單字清單</summary>
+        <div class="record-words-area">
+          <div class="input-bar">
+            <input type="text" placeholder="Enter a word & phrase" />
+            <button>Add</button>
+          </div>
+      
+          <ul>
+            <li v-for="(word, index) in markedwords " :key="index">{{word}}</li>
+          </ul>
+        </div>
       </details>
 
       <details>
@@ -92,9 +101,11 @@ const editableTitle = ref(null);
 // const articleTitle = ref('');
 
 const articles = reactive([])  // reactive 陣列
-const selectedIndex = ref(0); // 記錄被選中的 li
+const selectedIndex = ref(0); // 記錄被選中的文章 li
 
 const newArticle_id = reactive([]) // 紀錄新增文章的id
+
+const markedwords = reactive(['apple','banana','x','sawe','asss','banana','x','sawe','asss','banana','x','sawe','asss']) // 紀錄標記不熟悉的單字
 
 
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
@@ -385,7 +396,7 @@ watch(selectedArticle, (newItem) => {
 <style scoped>
 
 #container{
-  width: 60vw;
+  width: 70vw;
   height: 60vh;
 
   background-color: rgba(255, 255, 255, 0.8);
@@ -457,7 +468,7 @@ watch(selectedArticle, (newItem) => {
 
 
 .note-div{
-  width: 300px;
+  width: 400px;
   height: 100%;
   border-radius: 6px;
 }
@@ -466,13 +477,44 @@ watch(selectedArticle, (newItem) => {
 
 
 .note-div .record-words-area{
-  height: 200px;
+  height: 25vh;
   display: block;
-  /* width: auto; */
+  width: auto; 
+  padding: 10px;
+
+  overflow-x: hidden;
+  overflow-y: scroll;
+
 }
 
+
+.note-div .record-words-area input{
+  /* margin-bottom: 10px; */
+  border: 2px solid #ccc;
+  border-radius: 5px; 
+  /* margin-left: 0; */
+
+}
+
+.note-div .record-words-area input:focus{
+  outline: none;
+  border: 2px solid #555;
+}
+
+
+
+.note-div .record-words-area button{
+  padding: 10px 20px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+
 .note-div .note-area{
-  height: 300px;
+  height: 25vh;
   /* border: none; */
   display: block;
   text-align: left;
@@ -482,6 +524,16 @@ watch(selectedArticle, (newItem) => {
   background-color: rgba(240, 240, 240, 5); /* 背景半透明 */
   border: 1px solid #ccc;   /*外框 */
   overflow: auto;        /* 讓邊框收齊 */
+}
+
+.note-div summary{
+  text-align: left;
+}
+
+.input-bar{
+  position: fixed;
+  display: flex;
+
 }
 
 
@@ -501,6 +553,7 @@ watch(selectedArticle, (newItem) => {
   display: flex;
   margin: 5px;
 }
+
 
 
 
