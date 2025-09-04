@@ -47,7 +47,9 @@ export default {
 
 body{
   font-family: sans-serif;
-  background-image: url('@/assets/photo_beach.avif');
+  /* background-image: url('@/assets/photo_beach.avif'); */
+  background-color: lightgray;
+
   background-size: cover;
   display: flex;
   flex-direction: column;

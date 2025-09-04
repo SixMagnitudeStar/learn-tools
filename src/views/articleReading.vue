@@ -63,7 +63,7 @@
 
       <details>
         <summary>筆記</summary>
-        <div class="note-area" contenteditable="true"></div>
+        <div class="note-area" contenteditable="true" ref="noteArea"></div>
       </details>
 
 
@@ -90,7 +90,8 @@ const selectedArticle = reactive({
   'id': 0,
   'title': '',
   'content': '',
-  'tags_css': []
+  'tags_css': [],
+  'note': ''
 })
 
 
@@ -107,6 +108,8 @@ const newArticle_id = reactive([]) // 紀錄新增文章的id
 
 const markedwords = reactive(['apple','banana','x','sawe','asss','banana','x','sawe','asss','banana','x','sawe','asss']) // 紀錄標記不熟悉的單字
 
+
+const noteArea = ref(null);
 
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
@@ -148,8 +151,11 @@ function articleTitleChange(e){
 
 function createNewArticle(){
   //
+
+  newArticle_id.push(articles.length);
+
   articles.unshift({
-    id: articles.length+1,
+    id: articles.length,
     title: '',
     content: '',
     tags_css: []
@@ -208,6 +214,8 @@ function selectArticle(index){
   alert(index);
   selectedIndex.value=index;
   Object.assign(selectedArticle,articles[index]);
+
+  alert(JSON.stringify(selectedArticle))
 //  alert(JSON.stringify(selectedArticle))
   //text.value = articles[index].content;
 // articleTitle.value = articles[index].title;
@@ -215,37 +223,41 @@ function selectArticle(index){
 
 
 // 封裝 API 請求
-// async function fetchTextFromAPI() {
-//   try {
-//     alert('呼叫')
-//     const topic = encodeURIComponent('AI in education')
-//     const wordLimit = 200
-//     const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
+async function fetchTextFromAPI() {
+  try {
+    alert('呼叫')
+    const topic = encodeURIComponent('AI in education')
+    const wordLimit = 200
+    const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
 
-//     const res = await fetch(url)
-//     const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
+    const res = await fetch(url)
+    const data = await res.json() // 假設 API 回傳 JSON { text: '...' }
 
-//     const id = articles.length +1
-//     articles.unshift({
-//       'id': id,
-//       'title': data.topic,
-//       'content': data.essay,
-//       'tags_css': []
-//     });
+    const id = articles.length ;
 
-//    // Object.assign(selectedArticle, articles[0]);
-//      // 資料更新完成後再選第一個
-//     this.$nextTick(() => {
-//       this.selectArticle(0)
-//     })
+    newArticle_id.push(id);
 
-// //    selectedArticle.tags_css[1,3]
-//     //articleTitle.value = data.topic;
-//     // text.value = data.essay;     // 將 API 回傳文字設定給 ref
-//   } catch (err) {
-//     console.error(err)
-//   }
-// }
+    articles.unshift({
+      'id': id,
+      'title': data.topic || "無標題",
+      'content': data.essay || data.text || "",
+      'tags_css': [],
+      'note': data.note
+    });
+
+   // Object.assign(selectedArticle, articles[0]);
+     // 資料更新完成後再選第一個
+    this.$nextTick(() => {
+      this.selectArticle(0)
+    })
+
+//    selectedArticle.tags_css[1,3]
+    //articleTitle.value = data.topic;
+    // text.value = data.essay;     // 將 API 回傳文字設定給 ref
+  } catch (err) {
+    console.error(err)
+  }
+}
 
 import axios from 'axios'
 // import { indexOf } from 'core-js/core/array'
@@ -293,7 +305,8 @@ async function saveArticleAPI() {
     id: selectedArticle.id,
     title: selectedArticle.title,
     content: selectedArticle.content,
-      tags_css: selectedArticle.tags_css.map(item => ({
+    note: selectedArticle.note,
+    tags_css: selectedArticle.tags_css.map(item => ({
     index: String(item.index)
   }))
   }
@@ -302,13 +315,19 @@ async function saveArticleAPI() {
     Authorization: `Bearer ${auth.token}`
   }
 
-    alert('查看:'+JSON.stringify(body));
+
+
+
   try{
-    
     let response
     const i = newArticle_id.indexOf(body.id);
 
-    if (i!=-1){
+    alert('看id'+body.id);
+    alert('陣列'+newArticle_id);
+    alert('看i:'+i);
+
+
+    if (i!=-1 ){
       alert('post');
       response = await api.post('/article', body, { headers: headers })
     
@@ -364,6 +383,7 @@ onMounted(async ()=>{
 
   await nextTick()
   selectArticle(0)
+  noteArea.value.innerText = selectedArticle.note;
   selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
 
   // if (articles.length>0){
@@ -386,10 +406,15 @@ watch(selectedArticle, (newItem) => {
     editableTitle.value.innerText = newItem.title;
   }
 
+  if (noteArea.value.innerText != newItem.note){
+    noteArea.value.innerText = newItem.note;
+  }
+
   // if (text.value != newItem.content){
   //   text.value = newItem.content;
   // }
 })
+
 
 
 </script>
