@@ -566,18 +566,6 @@ watch(selectedArticle, (newItem) => {
   outline: none;
 }
 
-.icon{
-  width: 25px;
-  height: 25px;
-  display: block;
-  cursor: pointer;
-  
-}
-
-.iconBox{
-  display: flex;
-  margin: 5px;
-}
 
 
 

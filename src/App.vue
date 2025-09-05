@@ -98,4 +98,35 @@ body{
 .tooltip:hover .tooltip-text {
   visibility: visible;
 }
+
+.icon{
+  width: 25px;
+  height: 25px;
+  display: block;
+  cursor: pointer;
+  
+}
+
+.iconBox{
+  display: flex;
+  margin: 5px;
+  font-family: monospace;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.iconBox span{
+  margin-left: 3px;
+}
+
+.logoutBox{
+  cursor: pointer;
+}
+
+.logoutBox:hover {
+  background-color: #e0e0e0; /* 滑上去變淺灰 */
+  cursor: pointer;           /* 滑鼠顯示小手 */
+}
+
+
 </style>

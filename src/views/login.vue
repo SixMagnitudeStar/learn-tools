@@ -72,7 +72,7 @@ async function login() {
       password: password.value
     })
     auth.setToken(response.data.access_token)
-
+    localStorage.setItem('token', response.data.access_token)   // 存到 localStorage
     error.value = ''
     console.log('chk'+JSON.stringify(response.data))
     router.push('/articleReading')

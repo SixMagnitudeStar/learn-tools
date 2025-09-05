@@ -2,9 +2,7 @@
   <div id="container">
 
     <div  id="toggle-sidebar-btn-wrapper">
-      <!-- <button  id="toggle-sidebar-btn" @click="showPanel = !showPanel" class="toggle-btn">
-        {{ showPanel ? '隱藏' : '展開' }}
-      </button> -->
+
       <img id="toggle-sidebar-btn" :src="toggleSideBar_icon"  @click="() => { showPanel = !showPanel; switch_toggleSideIcon(); }" />
     </div>
 
@@ -23,13 +21,20 @@
         <ul class="item-list">
           <li v-for="(item, index) in items" :key="index">{{ item }}</li>
         </ul>
-        </div>
+        <span class="iconBox logoutBox" @click="logout">
+          <img  class="icon" src="../assets/logout.png" alt="登出" />
+          <span>登出</span>
+        </span>
+        
+      </div>
     </transition>
     <!-- 固定的展開按鈕 -->
 
   </div>
 </template>
 <script>
+import api from '@/axios.js'
+
 export default {
   name: 'AppSideBar',
   data() {
@@ -49,18 +54,31 @@ export default {
         this.newItem = '';
       }
     },
-    closeSideBar(){
-      // this.showPanel = false;
-      // this.sideBar_displayMode = 'block';
-    },
+
+    // 切換側邊欄展開/關閉 箭頭icon
     switch_toggleSideIcon() {
       this.toggleSideBar_icon = this.toggleSideBar_icon === require('../assets/angle-double-right.png')
         ? require('../assets/angle-double-left.png')
         : require('../assets/angle-double-right.png');
+    },
+    
+    // 登出
+    async logout() {
+      try {
+        await api.post('/logout')
+        alert('登出成功!!')
+        localStorage.removeItem('token')  // 登出時清掉 token
+        this.$router.push('/login')  // <- 這一行就可以跳頁
+      } catch (err) {
+        console.error('422 details:', err.response?.data?.detail)
+        console.error(err)
+      }
     }
 
   }
 };
+
+
 </script>
 
 
