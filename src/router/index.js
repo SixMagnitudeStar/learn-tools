@@ -5,6 +5,7 @@ import ELPView from '../views/ELP.vue'
 import loginView from '@/views/login.vue'
 import UnfamiliarWordsView from '../views/UnfamiliarWordsArea.vue'
 import articleReadingPage from '@/views/articleReading.vue'
+import personalSetting from '@/views/personalSetting.vue'
 // import { useAuthStore } from '@/auth.js'
 
 const routes = [
@@ -18,7 +19,8 @@ const routes = [
   { path: '/UnfamiliarWordsArea', component: UnfamiliarWordsView},
   { path: '/articleReading', 
     component: articleReadingPage,
-    meta: { requiresAuth: true }}
+    meta: { requiresAuth: true }},
+  { path: '/personalSetting', component: personalSetting}
   // 你可以在這裡加入更多頁面
 ]
 

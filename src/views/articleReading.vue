@@ -242,13 +242,15 @@ async function fetchTextFromAPI() {
       'title': data.topic || "無標題",
       'content': data.essay || data.text || "",
       'tags_css': [],
-      'note': data.note
+      'note': data.note || ""
     });
 
    // Object.assign(selectedArticle, articles[0]);
      // 資料更新完成後再選第一個
-    this.$nextTick(() => {
-      this.selectArticle(0)
+
+    nextTick(() => {
+      selectArticle(0)
+      editableTitle.value.focus();
     })
 
 //    selectedArticle.tags_css[1,3]
@@ -263,6 +265,7 @@ import axios from 'axios'
 // import { indexOf } from 'core-js/core/array'
 
 async function getArticles() {
+  alert('觸發get');
   try {
     const response = await axios.get('http://127.0.0.1:8000/articles', {
       headers: {
@@ -270,10 +273,11 @@ async function getArticles() {
       }
     })
     console.log('文章資料:', response.data.articles)
-
-    return response.data.articles
+    return Array.isArray(response.data.articles) ? response.data.articles : [];
+    // return response.data.articles
   } catch (error) {
     console.error('取得文章失敗:', error)
+    return []
 
   }
 }
@@ -305,18 +309,19 @@ async function saveArticleAPI() {
     id: selectedArticle.id,
     title: selectedArticle.title,
     content: selectedArticle.content,
-    note: selectedArticle.note,
+
+    note: selectedArticle.note || '', // 添加預設值
     tags_css: selectedArticle.tags_css.map(item => ({
     index: String(item.index)
-  }))
+    }))
   }
-  
+  // alert('查看body:'+JSON.stringify(body));
+    
+  alert('查看body:'+JSON.stringify(body));
+
   const headers = {
     Authorization: `Bearer ${auth.token}`
   }
-
-
-
 
   try{
     let response
@@ -337,7 +342,7 @@ async function saveArticleAPI() {
    
     }
 
-    console.log('chk', response.data)
+    console.log('新增成功', response.data)
   } catch(err){
     console.error('422 details:', err.response?.data?.detail)
     console.error(err)
@@ -376,7 +381,7 @@ onMounted(async ()=>{
   // }
 
 
-
+  alert('觸發mount');
 
   const fetched = await getArticles()
   articles.push(...fetched)  // 展開陣列
