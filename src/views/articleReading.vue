@@ -192,8 +192,10 @@ function toggleWord(index) {
   const found = selectedArticle.tags_css.find(item => item.index === i)
   if (!found){
     selectedArticle.tags_css.push({'index':i})
+    saveMarkedword(parsedWords.value[index].html)
   }else{
     selectedArticle.tags_css = selectedArticle.tags_css.filter(item => item.index !== i)
+    deleteMarkedWord(parsedWords.value[index].html)
   }
 }
 
@@ -211,11 +213,9 @@ function isWord(str) {
 }
 
 function selectArticle(index){
-  alert(index);
   selectedIndex.value=index;
   Object.assign(selectedArticle,articles[index]);
 
-  alert(JSON.stringify(selectedArticle))
 //  alert(JSON.stringify(selectedArticle))
   //text.value = articles[index].content;
 // articleTitle.value = articles[index].title;
@@ -225,7 +225,6 @@ function selectArticle(index){
 // 封裝 API 請求
 async function fetchTextFromAPI() {
   try {
-    alert('呼叫')
     const topic = encodeURIComponent('AI in education')
     const wordLimit = 200
     const url = `http://127.0.0.1:8000/essay?topic=${topic}&word_limit=${wordLimit}`
@@ -265,7 +264,6 @@ import axios from 'axios'
 // import { indexOf } from 'core-js/core/array'
 
 async function getArticles() {
-  alert('觸發get');
   try {
     const response = await axios.get('http://127.0.0.1:8000/articles', {
       headers: {
@@ -303,8 +301,6 @@ async function getArticles() {
 //   }
 // }
 async function saveArticleAPI() {
-
-
   const body = {
     id: selectedArticle.id,
     title: selectedArticle.title,
@@ -315,9 +311,7 @@ async function saveArticleAPI() {
     index: String(item.index)
     }))
   }
-  // alert('查看body:'+JSON.stringify(body));
-    
-  alert('查看body:'+JSON.stringify(body));
+
 
   const headers = {
     Authorization: `Bearer ${auth.token}`
@@ -327,17 +321,18 @@ async function saveArticleAPI() {
     let response
     const i = newArticle_id.indexOf(body.id);
 
-    alert('看id'+body.id);
-    alert('陣列'+newArticle_id);
-    alert('看i:'+i);
 
-
+    // post
     if (i!=-1 ){
-      alert('post');
       response = await api.post('/article', body, { headers: headers })
-    
+      
+      // 建立文章儲存後，從存放新文章id的列表中移除
+      const index = newArticle_id.indexOf(selectedArticle.id)
+      if (index !== -1) {
+        newArticle_id.splice(index, 1) // 移除第一個匹配元素
+      }
     }else{
-      alert('put');
+      // put
       response = await api.put(`/article/${body.id}`, body, { headers })
    
     }
@@ -347,64 +342,71 @@ async function saveArticleAPI() {
     console.error('422 details:', err.response?.data?.detail)
     console.error(err)
   }
-
-
-  // try {
-  //   const response = await api.post(
-  //     '/article',
-  //     {
-  //       title: selectedArticle.title,
-  //       content: selectedArticle.content,
-  //       tags_css: selectedArticle.tags_css
-  //     },
-  //     {
-  //       headers: {
-  //         Authorization: `Bearer ${auth.token}`
-  //       }
-  //     }
-  //   )
-
-  //   console.log('chk', response.data)
-  //   // router.push({ name: 'articleReading' })
-  // } catch (err) {
-  //   console.error(err)
-  // }
 }
-//  import { useAuthStore } from '@/stores/auth'
+
+async function saveMarkedword(word){
+  alert('新增')
+    // 檢查文章是否已經儲存
+    if (newArticle_id.includes(selectedArticle.id)){
+      alert('文章尚未儲存，請先儲存!')
+      return
+    }
+
+    alert(typeof selectedArticle.id);
+    alert('word:'+word)
+    let response
+
+    const body = {
+      article_id: selectedArticle.id,
+      word: word
+    }
+
+  try{
+    response = await api.post('/markedword', body)
+    console.log('新增成功', response.data)
+    alert('maredword新增成功')
+
+  }catch(err){
+    console.error('422 details:', err.response?.data?.detail)
+    console.error(err)
+  }
+}
+
+// 檢查是否是新文章，是新文章直接離開不用呼叫API刪除標記文字
+// 呼叫API，刪除對應的字，返回訊息
+
+async function deleteMarkedWord(word) {
+  alert('刪除')
+  if (newArticle_id.includes(selectedArticle.id)) return
+  
+  let response
+
+  const params = {
+    article_id: selectedArticle.id,
+    word: word
+  }
+
+  
+  response = await api.delete('/markedword/',{
+    params: params
+  })
+  console.log(response.data)
+  alert('maredword刪除成功')
+}
+
 onMounted(async ()=>{
 
-  // const auth = useAuthStore()
-  
-// 頁面載入時同步 文章標題的innerText
-  // if (editableTitle.value){
-  //   editableTitle.value.innerText = articleTitle.value;
-  // }
 
-
-  alert('觸發mount');
-
+  // 抓取文章
   const fetched = await getArticles()
   articles.push(...fetched)  // 展開陣列
 
   await nextTick()
-  selectArticle(0)
+  selectArticle(0) // 讀取第一篇文章
   noteArea.value.innerText = selectedArticle.note;
   selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
 
-  // if (articles.length>0){
-  //   text.value = articles[0].content
-  // }
-  
-  // fetchTextFromAPI();
 })
-
-
-// 同步外部改變時也更新 editable div 內容（避免虛擬DOM覆蓋）
-// watch(articleTitle, (newVal) => {
-//   if (editableTitle.value && editableTitle.value.innerText !== newVal) {
-//     editableTitle.value.innerText = newVal
-//   }
-// })
 
 watch(selectedArticle, (newItem) => {
   if (editableTitle.value && editableTitle.value.innerText !== newItem.title){
@@ -447,6 +449,8 @@ watch(selectedArticle, (newItem) => {
   color: red;
   font-weight: bold;
 }
+
+
 .article-content{
     width: 50vw;
     text-align: left;
@@ -471,6 +475,7 @@ watch(selectedArticle, (newItem) => {
   /* background-color: #F0F0F0; */
   background-color: rgba(240, 240, 240, 5); /* 背景半透明 */
   height: auto;
+  cursor: pointer;
 
   list-style: none;        /* 移除前面的圓點 */
   padding: 0;
@@ -478,6 +483,10 @@ watch(selectedArticle, (newItem) => {
   border: 1px solid #ccc;  /* 外框 */
   border-radius: 6px;
   overflow: auto;        /* 讓邊框收齊 */
+
+      caret-color: transparent;   /* 隱藏輸入游標 */
+    user-select: none;          /* 禁止選取文字 (可選) */
+/*    outline: none;              移除點擊時外框 */
 } 
 
 .article-list li {

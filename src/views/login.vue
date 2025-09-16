@@ -75,8 +75,9 @@ async function login() {
     localStorage.setItem('token', response.data.access_token)   // 存到 localStorage
     error.value = ''
     console.log('chk'+JSON.stringify(response.data))
-    router.push('/articleReading')
-    // router.push({ name: 'articleReading' })
+   // router.push('/articleReading')
+    alert('跳轉')
+    router.push({ name: 'articleReading' })
   } catch (err) {
     console.error(err)
     error.value = 'Login failed'
