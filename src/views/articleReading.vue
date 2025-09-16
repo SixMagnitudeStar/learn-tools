@@ -30,9 +30,19 @@
           contenteditable="true"
           placeholder="5sss"
           @input="articleTitleChange"
+          @keydown="handleTitleKeydown"
           ref="editableTitle"
           spellcheck="false"
+          
       ></h1>
+      <div v-if="isEditing" 
+        class="article-editor" 
+        contenteditable="true"
+        @input="updateContent"
+         ref="editorRef"
+        ></div>
+        
+      <div v-else>
       <span
         v-for="(word, index) in parsedWords"
         :key="index"
@@ -43,6 +53,7 @@
         @click="toggleWord(index)"
         v-html="word.html"
       ></span>
+      </div>
     </div>
 
     <div class="note-div">
@@ -76,7 +87,7 @@ import { ref, computed, onMounted, watch, reactive, nextTick  } from 'vue'
 import { useAuthStore } from '@/auth.js'
 
 import api from '@/axios.js'
-
+import axios from 'axios'
 /* global defineOptions */
 defineOptions({
   name: 'articleReadingPage'
@@ -111,6 +122,12 @@ const markedwords = reactive(['apple','banana','x','sawe','asss','banana','x','s
 
 const noteArea = ref(null);
 
+
+const editorRef = ref(null)
+
+const isEditing = ref(false)
+
+
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
 
 
@@ -127,6 +144,14 @@ const noteArea = ref(null);
 
 // const text = ref('');
 
+
+// 編輯器內容更新
+function updateContent(e) {
+  selectedArticle.content = e.target.innerText // 或 innerHTML，看你要不要保留格式
+}
+
+
+
 // 將文字斷詞，包進 HTML 結構
 const parsedWords = computed(() => {
   // const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
@@ -141,13 +166,23 @@ const parsedWords = computed(() => {
 })
 
 
+
 // 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
 function articleTitleChange(e){
-//  articleTitle.value = e.target.innerText;
   selectedArticle.title = e.target.innerText;
 }
 
 
+
+
+function handleTitleKeydown(e) {
+  if (!isEditing.value) return
+
+  if (e.key === 'Enter' || e.key === 'ArrowDown') {
+    e.preventDefault() // 避免換行
+    editorRef.value?.focus()
+  }
+}
 
 function createNewArticle(){
   //
@@ -164,6 +199,7 @@ function createNewArticle(){
   selectArticle(0);
   editableTitle.value.focus();
 }
+
 
 // function onBlur(event) {
 //   if (articleTitle.value.trim() === '') {
@@ -201,12 +237,12 @@ function toggleWord(index) {
 
 
 
-// 判斷是不是字元(單一字元)
+// // 判斷是不是字元(單一字元)
 function isTextChar(char) {
   return /^[a-zA-Z0-9]$/.test(char);
 }
 
-// 判斷是不是文字(逐一檢查每個word的單一字元)
+// // 判斷是不是文字(逐一檢查每個word的單一字元)
 function isWord(str) {
   // 全部字元都是文字或數字
   return [...str].every(char => isTextChar(char))
@@ -215,6 +251,22 @@ function isWord(str) {
 function selectArticle(index){
   selectedIndex.value=index;
   Object.assign(selectedArticle,articles[index]);
+  alert(selectedArticle.content);
+  nextTick(() => {
+    if (editorRef.value) {
+      editorRef.value.innerText = selectedArticle.content
+      editorRef.value.focus()
+    }
+  })
+
+
+  if (newArticle_id.includes(selectedArticle.id)){
+    alert('新文章')
+    isEditing.value = true
+  }else{
+    alert('舊文章')
+    isEditing.value = false
+  }
 
 //  alert(JSON.stringify(selectedArticle))
   //text.value = articles[index].content;
@@ -260,7 +312,9 @@ async function fetchTextFromAPI() {
   }
 }
 
-import axios from 'axios'
+
+
+
 // import { indexOf } from 'core-js/core/array'
 
 async function getArticles() {
@@ -406,7 +460,12 @@ onMounted(async ()=>{
   noteArea.value.innerText = selectedArticle.note;
   selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
 
+
+
+
 })
+
+
 
 watch(selectedArticle, (newItem) => {
   if (editableTitle.value && editableTitle.value.innerText !== newItem.title){
@@ -429,7 +488,8 @@ watch(selectedArticle, (newItem) => {
 
 #container{
   width: 70vw;
-  height: 60vh;
+  min-height: 60vh;
+  height: auto;
 
   background-color: rgba(255, 255, 255, 0.8);
   padding: 20px;
@@ -458,6 +518,16 @@ watch(selectedArticle, (newItem) => {
     margin-left: 30px;
     border: none;
     outline: none;
+}
+
+.article-editor{
+    width: 50vw;
+    text-align: left;
+    font-size: 24px;
+    margin-left: 30px;
+    border: none;
+    outline: none;
+    font-size: blue;
 }
 
 .article-title{
@@ -579,9 +649,6 @@ watch(selectedArticle, (newItem) => {
 [contenteditable='true']{
   outline: none;
 }
-
-
-
 
 
 </style>
