@@ -67,6 +67,12 @@ body{
   position: relative;
   display: inline-block;
   cursor: pointer;
+  padding: 5px;
+}
+
+.tooltip:hover{
+  background-color: #ddd;
+  border-radius: 8px;
 }
 
 .tooltip .tooltip-text {
@@ -98,6 +104,7 @@ body{
 
 .tooltip:hover .tooltip-text {
   visibility: visible;
+
 }
 
 .icon{

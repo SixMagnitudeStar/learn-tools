@@ -15,6 +15,14 @@
           <img @click="saveArticleAPI()" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
           <div class="tooltip-text">儲存文章</div>
         </div>
+        <div class="tooltip">
+          <img  class="icon" src="../assets/edit.png" alt="編輯文章" title="編輯文章">
+          <div class="tooltip-text">編輯文章</div>
+        </div>
+        <div class="tooltip">
+          <img @click="deleteArticle()" class="icon" src="../assets/bin.png" alt="刪除文章" title="刪除文章">
+          <div class="tooltip-text">刪除文章</div>
+        </div>
       </span>
       <ul class="article-list">
         <li v-for="(article,index) in articles" 
@@ -251,7 +259,6 @@ function isWord(str) {
 function selectArticle(index){
   selectedIndex.value=index;
   Object.assign(selectedArticle,articles[index]);
-  alert(selectedArticle.content);
   nextTick(() => {
     if (editorRef.value) {
       editorRef.value.innerText = selectedArticle.content
@@ -259,6 +266,7 @@ function selectArticle(index){
     }
   })
 
+  alert('選擇的文章id:'+selectedArticle.id+', 列表index:'+selectedIndex.value);
 
   if (newArticle_id.includes(selectedArticle.id)){
     alert('新文章')
@@ -324,7 +332,7 @@ async function getArticles() {
         Authorization: `Bearer ${auth.token}`
       }
     })
-    console.log('文章資料:', response.data.articles)
+    console.log('文章資料:', response.data)
     return Array.isArray(response.data.articles) ? response.data.articles : [];
     // return response.data.articles
   } catch (error) {
@@ -398,16 +406,49 @@ async function saveArticleAPI() {
   }
 }
 
+
+function deleteArticle(){
+
+  // 紀錄刪除文章的id
+  const id = selectedArticle.id
+  alert('刪除文章id:'+id+', 移除文章index:'+selectedIndex.value);
+  // 將當前選取文章從文章列表中移除
+
+  articles.splice(selectedIndex.value, 1);
+
+  // 選取第一篇文章
+  selectArticle(0);
+
+  // 檢查是否為尚未儲存的文章，如果是的話直接離開不用執行後面api
+  if (newArticle_id.includes(selectedArticle.id)) return
+
+  // 呼叫API從資料庫刪除該篇文章
+  deleteArticleAPI(id);
+
+}
+
+async function deleteArticleAPI(id){
+  //
+  try{
+    let response
+    response = await api.delete(`/article/${id}`)
+    console.log('刪除成功', response?.data)
+  
+  }catch(err){
+    console.error('422 details:', err.response?.data?.detail)
+    console.error(err)
+  }
+}
+
 async function saveMarkedword(word){
-  alert('新增')
+
     // 檢查文章是否已經儲存
     if (newArticle_id.includes(selectedArticle.id)){
       alert('文章尚未儲存，請先儲存!')
       return
     }
 
-    alert(typeof selectedArticle.id);
-    alert('word:'+word)
+    
     let response
 
     const body = {
@@ -418,7 +459,6 @@ async function saveMarkedword(word){
   try{
     response = await api.post('/markedword', body)
     console.log('新增成功', response.data)
-    alert('maredword新增成功')
 
   }catch(err){
     console.error('422 details:', err.response?.data?.detail)
@@ -458,7 +498,8 @@ onMounted(async ()=>{
   await nextTick()
   selectArticle(0) // 讀取第一篇文章
   noteArea.value.innerText = selectedArticle.note;
-  selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
+  
+  // selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
 
 
 
@@ -504,12 +545,17 @@ watch(selectedArticle, (newItem) => {
   cursor: pointer;
   padding: 2px;
   transition: 0.2s;
+  
 }
 .word.active {
   color: red;
   font-weight: bold;
 }
 
+.word:hover{
+  background-color: #ddd;
+  border-radius: 5px;
+}
 
 .article-content{
     width: 50vw;
