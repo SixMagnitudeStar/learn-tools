@@ -41,6 +41,7 @@
           @keydown="handleTitleKeydown"
           ref="editableTitle"
           spellcheck="false"
+          
       ></h1>
       <div v-if="isEditing" 
         class="article-editor" 
@@ -114,8 +115,6 @@ const selectedArticle = reactive({
 
 
 
-const articleText = ref("")
-
 
 const editableTitle = ref(null);
 
@@ -165,63 +164,12 @@ function updateContent(e) {
 const parsedWords = computed(() => {
   // const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
   // const words = (text.value || '').match(/\s+|\w+|[^\w\s]/g) || []
-
-
-
-// \s+
-// \s → 匹配任何空白字元（空格、Tab、換行）
-// + → 一個或多個
-
-// 意思：把連續的空白視為一個「單位」
-
-// \w+
-// \w → 匹配字母、數字、底線 [A-Za-z0-9_]
-// + → 一個或多個
-
-// 意思：抓連續的英文單詞或數字
-
-// [^\w\s]
-// [...] → 字元集
-// ^ → 取反
-// \w\s → 所有字母/數字/底線 + 空白
-// [^\w\s] → 任何不是字母/數字/底線或空白的字元
-
-// 意思：抓標點符號或特殊字元
-
-// |
-// OR 的意思
-// 正則會依序匹配：空白 → 單詞/數字 → 標點
-// g 標誌
-// 全局匹配（global），會返回 所有匹配到的結果，而不只第一個
-
   const words = (selectedArticle.content || '').match(/\s+|\w+|[^\w\s]/g) || []
   return words.map((word) => {
-    if ((word.trim() != '') || (!isWord(word))){
-      return { html: word,  clickable: false } // 空白原樣回傳
+    if ((word.trim() === '') || (!isWord(word))){
+      return { html: word, clickable: false } // 空白原樣回傳
     }
     return { html: word, clickable: true }
-  })
-})
-
-
-// 將新文章內容轉為block
-const  parseArticleText = computed(() => {
-  //
-  const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
-
-  return words.map((word) => {
-    // 空白字元
-    if (word.trim() === ''){
-      return { text: word ,text_type:'blank'}
-    }
-
-    // 單字
-    if (isWord(word)){
-      return { text: word ,text_type:'word'}
-    }
-    
-    //標點或其他
-    return  { text: word ,text_type:'punctuation'}
   })
 })
 
