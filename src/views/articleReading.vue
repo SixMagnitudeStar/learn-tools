@@ -12,7 +12,7 @@
           <div class="tooltip-text">隨機一篇生成文章</div>
         </div>
         <div class="tooltip">
-          <img @click="saveArticleAPI()" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
+          <img @click="saveArticle()" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
           <div class="tooltip-text">儲存文章</div>
         </div>
         <div class="tooltip">
@@ -95,6 +95,7 @@ import { useAuthStore } from '@/auth.js'
 
 import api from '@/axios.js'
 import axios from 'axios'
+import { parse } from '@babel/eslint-parser'
 /* global defineOptions */
 defineOptions({
   name: 'articleReadingPage'
@@ -103,12 +104,15 @@ defineOptions({
 
 const auth = useAuthStore()
 
+const headers = {
+  Authorization: `Bearer ${auth.token}`
+}
 
 const selectedArticle = reactive({
   'id': 0,
   'title': '',
   'content': '',
-  'tags_css': [],
+  'blocks': [],
   'note': ''
 })
 
@@ -124,7 +128,7 @@ const editableTitle = ref(null);
 const articles = reactive([])  // reactive 陣列
 const selectedIndex = ref(0); // 記錄被選中的文章 li
 
-const newArticle_id = reactive([]) // 紀錄新增文章的id
+
 
 const markedwords = reactive(['apple','banana','x','sawe','asss','banana','x','sawe','asss','banana','x','sawe','asss']) // 紀錄標記不熟悉的單字
 
@@ -132,9 +136,6 @@ const markedwords = reactive(['apple','banana','x','sawe','asss','banana','x','s
 const noteArea = ref(null);
 
 
-const editorRef = ref(null)
-
-const isEditing = ref(false)
 
 
 // articles.value.push("訊息 1","訊息 2AFASFSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSSA", "訊息 3");
@@ -162,11 +163,6 @@ function updateContent(e) {
 
 
 // 將文字斷詞，包進 HTML 結構
-const parsedWords = computed(() => {
-  // const words = text.value.match(/\s+|\w+|[^\w\s]/g) || []
-  // const words = (text.value || '').match(/\s+|\w+|[^\w\s]/g) || []
-
-
 
 // \s+
 // \s → 匹配任何空白字元（空格、Tab、換行）
@@ -193,6 +189,7 @@ const parsedWords = computed(() => {
 // 正則會依序匹配：空白 → 單詞/數字 → 標點
 // g 標誌
 // 全局匹配（global），會返回 所有匹配到的結果，而不只第一個
+const parsedWords = computed(() => {
 
   const words = (selectedArticle.content || '').match(/\s+|\w+|[^\w\s]/g) || []
   return words.map((word) => {
@@ -204,7 +201,108 @@ const parsedWords = computed(() => {
 })
 
 
-// 將新文章內容轉為block
+//////////////////////   文章 ////////////////////////
+
+//// 標題處理   (標題UI與 '當前選擇文章' 物件資料的同步、捕獲按下Enter事件切換到文章編輯區)
+
+// 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
+function articleTitleChange(e){
+  selectedArticle.title = e.target.innerText;
+}
+
+
+
+
+function handleTitleKeydown(e) {
+  if (!isEditing.value) return
+
+  if (e.key === 'Enter' || e.key === 'ArrowDown') {
+    e.preventDefault() // 避免換行
+    editorRef.value?.focus()
+  }
+}
+
+
+///// 文章資料物件  ////////
+
+// 狀態紀錄
+const isEditing = ref(false)
+
+// 新增文章id紀錄
+const newArticleID_arr = reactive([]) // 紀錄新增文章的id
+
+/////////////////////
+
+
+///// 查詢文章 /////
+
+// 呼叫api從後端抓取文章資料
+async function getArticles() {
+  try {
+
+    const response = await api.get('/articles',  { headers: headers })
+
+    console.log('文章資料:', response.data)
+    return Array.isArray(response.data.articles) ? response.data.articles : [];
+    // return response.data.articles
+  } catch (error) {
+    console.error('取得文章失敗:', error)
+    return []
+
+  }
+}
+
+
+onMounted(async ()=>{
+
+  // 載入頁面時抓取文章
+  const fetched = await getArticles()
+  articles.push(...fetched)  // 展開陣列
+
+  await nextTick()
+
+  selectArticle(0) // 讀取第一篇文章
+
+  noteArea.value.innerText = selectedArticle.note;
+
+})
+
+
+
+
+
+//////// 文章內容處理 (新增、編輯、儲存)
+
+// 新增文章
+
+
+// 創件一筆新的文章資料物件，放入文章列表中，並選取他
+function createNewArticle(){
+
+  // 設定新文章id，值為先前最新一筆資料的id值+1 
+  const newArticle_id = articles.lenth === 0 ? 1 : articles[0].id+1; 
+  
+  // 將新增文章的id加入列表紀錄
+  newArticleID_arr.push(newArticle_id);
+
+  articles.unshift({
+    id: newArticleID_arr,
+    title: '',
+    content: '',
+    block: []
+  });
+
+  // 從文章列表中選取最新這筆文章資料物件
+  selectArticle(0); 
+
+  // focus標題區塊
+  editableTitle.value.focus();
+}
+
+
+
+// 動態偵測文章邊提區塊，將新文章內容轉為單字block
+const editorRef = ref(null)
 const  parseArticleText = computed(() => {
   //
   const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
@@ -226,39 +324,68 @@ const  parseArticleText = computed(() => {
 })
 
 
-
-// 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
-function articleTitleChange(e){
-  selectedArticle.title = e.target.innerText;
+// // 判斷是不是字元(單一字元)
+function isTextChar(char) {
+  return /^[a-zA-Z0-9]$/.test(char);
 }
 
+// // 判斷是不是文字(逐一檢查每個word的單一字元)
+function isWord(str) {
+  // 全部字元都是文字或數字
+  return [...str].every(char => isTextChar(char))
+}
+
+// 呼叫api將文章存入後端
+async function saveArticle() {
+
+  // 將編輯區塊文字轉換後的block寫入 選擇文章物件 內
+  selectedArticle.blocks = parseArticleText;
+
+  const body = {
+    id: selectedArticle.id,
+    title: selectedArticle.title,
+    content: selectedArticle.content,
+
+    note: selectedArticle.note || '', // 添加預設值
+    
+    blocks: selectedArticle.blocks || []
+  }
+
+  try{
+    let response
+    const i = newArticle_id.indexOf(body.id);
 
 
+    // post
+    if (i!=-1 ){
+      response = await api.post('/article', body, { headers: headers })
+      
+      // 建立文章儲存後，從存放新文章id的列表中移除
+      const index = newArticle_id.indexOf(selectedArticle.id)
+      if (index !== -1) {
+        newArticle_id.splice(index, 1) // 移除第一個匹配元素
+      }
+    }else{
+      // put
+      response = await api.put(`/article/${body.id}`, body, { headers })
+   
+    }
 
-function handleTitleKeydown(e) {
-  if (!isEditing.value) return
-
-  if (e.key === 'Enter' || e.key === 'ArrowDown') {
-    e.preventDefault() // 避免換行
-    editorRef.value?.focus()
+    console.log('新增成功', response.data)
+  } catch(err){
+    console.error('422 details:', err.response?.data?.detail)
+    console.error(err)
   }
 }
 
-function createNewArticle(){
-  //
+///////////////////////////////////////////////////////////////
 
-  newArticle_id.push(articles.length);
 
-  articles.unshift({
-    id: articles.length,
-    title: '',
-    content: '',
-    tags_css: []
-  });
 
-  selectArticle(0);
-  editableTitle.value.focus();
-}
+
+
+
+
 
 
 // function onBlur(event) {
@@ -297,16 +424,6 @@ function toggleWord(index) {
 
 
 
-// // 判斷是不是字元(單一字元)
-function isTextChar(char) {
-  return /^[a-zA-Z0-9]$/.test(char);
-}
-
-// // 判斷是不是文字(逐一檢查每個word的單一字元)
-function isWord(str) {
-  // 全部字元都是文字或數字
-  return [...str].every(char => isTextChar(char))
-}
 
 function selectArticle(index){
   selectedIndex.value=index;
@@ -368,92 +485,6 @@ async function fetchTextFromAPI() {
     //articleTitle.value = data.topic;
     // text.value = data.essay;     // 將 API 回傳文字設定給 ref
   } catch (err) {
-    console.error(err)
-  }
-}
-
-
-
-
-// import { indexOf } from 'core-js/core/array'
-
-async function getArticles() {
-  try {
-    const response = await axios.get('http://127.0.0.1:8000/articles', {
-      headers: {
-        Authorization: `Bearer ${auth.token}`
-      }
-    })
-    console.log('文章資料:', response.data)
-    return Array.isArray(response.data.articles) ? response.data.articles : [];
-    // return response.data.articles
-  } catch (error) {
-    console.error('取得文章失敗:', error)
-    return []
-
-  }
-}
-
-
-// async function saveArticleAPI() {
-//   alert('進入');
-//   try {
-//     const response = await api.post('/article', {
-//       title: articles[selectedIndex].title,
-//       content: articles[selectedIndex].content
-//     },{
-//       headers: {
-//         Authorization: `Bearer ${auth.token}`
-//       }
-//     })
-//     alert('try');
-//     console.log('chk'+JSON.stringify(response.data))
-//     // router.push({ name: 'articleReading' })
-//   } catch (err) {
-//     alert('error')
-//     console.error(err)
-//   }
-// }
-async function saveArticleAPI() {
-  const body = {
-    id: selectedArticle.id,
-    title: selectedArticle.title,
-    content: selectedArticle.content,
-
-    note: selectedArticle.note || '', // 添加預設值
-    tags_css: selectedArticle.tags_css.map(item => ({
-    index: String(item.index)
-    }))
-  }
-
-
-  const headers = {
-    Authorization: `Bearer ${auth.token}`
-  }
-
-  try{
-    let response
-    const i = newArticle_id.indexOf(body.id);
-
-
-    // post
-    if (i!=-1 ){
-      response = await api.post('/article', body, { headers: headers })
-      
-      // 建立文章儲存後，從存放新文章id的列表中移除
-      const index = newArticle_id.indexOf(selectedArticle.id)
-      if (index !== -1) {
-        newArticle_id.splice(index, 1) // 移除第一個匹配元素
-      }
-    }else{
-      // put
-      response = await api.put(`/article/${body.id}`, body, { headers })
-   
-    }
-
-    console.log('新增成功', response.data)
-  } catch(err){
-    console.error('422 details:', err.response?.data?.detail)
     console.error(err)
   }
 }
@@ -540,23 +571,6 @@ async function deleteMarkedWord(word) {
   alert('maredword刪除成功')
 }
 
-onMounted(async ()=>{
-
-
-  // 抓取文章
-  const fetched = await getArticles()
-  articles.push(...fetched)  // 展開陣列
-
-  await nextTick()
-  selectArticle(0) // 讀取第一篇文章
-  noteArea.value.innerText = selectedArticle.note;
-  
-  // selectedArticle.tags_css = [{'index':'1'},{'index':'2'}]
-
-
-
-
-})
 
 
 
