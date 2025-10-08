@@ -51,14 +51,14 @@
         
       <div v-else>
       <span
-        v-for="(word, index) in parsedWords"
+        v-for="(block, index) in selectedArticle.blocks"
         :key="index"
         :class="{ 
-          word: true, 
-          active: selectedArticle.tags_css.some(item => item.index === String(index)) 
+          block: true, 
+          active: block.marked
         }"
         @click="toggleWord(index)"
-        v-html="word.html"
+        v-html="block.text"
       ></span>
       </div>
     </div>
@@ -94,8 +94,8 @@ import { ref, computed, onMounted, watch, reactive, nextTick  } from 'vue'
 import { useAuthStore } from '@/auth.js'
 
 import api from '@/axios.js'
-import axios from 'axios'
-import { parse } from '@babel/eslint-parser'
+// import axios from 'axios'
+// import { parse } from '@babel/eslint-parser'
 /* global defineOptions */
 defineOptions({
   name: 'articleReadingPage'
@@ -118,7 +118,7 @@ const selectedArticle = reactive({
 
 
 
-const articleText = ref("")
+// const articleText = ref("")
 
 
 const editableTitle = ref(null);
@@ -280,18 +280,22 @@ onMounted(async ()=>{
 function createNewArticle(){
 
   // 設定新文章id，值為先前最新一筆資料的id值+1 
-  const newArticle_id = articles.lenth === 0 ? 1 : articles[0].id+1; 
+  alert(articles.length);
+  const newArticle_id = articles.length === 0 ? 1 : articles[0].id+1; 
+  alert(newArticle_id);
   
   // 將新增文章的id加入列表紀錄
   newArticleID_arr.push(newArticle_id);
 
   articles.unshift({
-    id: newArticleID_arr,
+    id: newArticle_id,
     title: '',
     content: '',
     block: []
   });
 
+
+  alert('檢查: '+articles[0]);
   // 從文章列表中選取最新這筆文章資料物件
   selectArticle(0); 
 
@@ -303,26 +307,65 @@ function createNewArticle(){
 
 // 動態偵測文章邊提區塊，將新文章內容轉為單字block
 const editorRef = ref(null)
-const  parseArticleText = computed(() => {
-  //
+// const  parseArticleText = computed(() => {
+//   //
+//   const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
+
+//   return words.map((word) => {
+//     // 空白字元
+//     if (word.trim() === ''){
+//       return { text: word ,text_type:'blank'}
+//     }
+
+//     // 單字
+//     if (isWord(word)){
+//       return { text: word ,text_type:'word'}
+//     }
+    
+//     //標點或其他
+//     return  { text: word ,text_type:'punctuation'}
+//   })
+// })
+
+
+const parseArticleText = computed(() => {
   const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
 
-  return words.map((word) => {
+  return words.map((word, idx) => {
+    const length = words.length
+
     // 空白字元
-    if (word.trim() === ''){
-      return { text: word ,text_type:'blank'}
+    if (word.trim() === '') {
+      return {
+        index: idx,
+        text: word,
+        text_type: 'blank',
+        previous_index: idx === 0 ? null : idx - 1,
+        next_index: idx === length - 1 ? null : idx + 1
+      }
     }
 
     // 單字
-    if (isWord(word)){
-      return { text: word ,text_type:'word'}
+    if (isWord(word)) {
+      return {
+        index: idx,
+        text: word,
+        text_type: 'word',
+        previous_index: idx === 0 ? null : idx - 1,
+        next_index: idx === length - 1 ? null : idx + 1
+      }
     }
-    
-    //標點或其他
-    return  { text: word ,text_type:'punctuation'}
+
+    // 標點或其他
+    return {
+      index: idx,
+      text: word,
+      text_type: 'punctuation',
+      previous_index: idx === 0 ? null : idx - 1,
+      next_index: idx === length - 1 ? null : idx + 1
+    }
   })
 })
-
 
 // // 判斷是不是字元(單一字元)
 function isTextChar(char) {
@@ -348,22 +391,23 @@ async function saveArticle() {
 
     note: selectedArticle.note || '', // 添加預設值
     
-    blocks: selectedArticle.blocks || []
+    blocks: parseArticleText.value || []
   }
+  console.log('檢查body: '+JSON.stringify(body));
 
   try{
     let response
-    const i = newArticle_id.indexOf(body.id);
-
+    
+    const i = newArticleID_arr.indexOf(body.id);
 
     // post
     if (i!=-1 ){
       response = await api.post('/article', body, { headers: headers })
       
       // 建立文章儲存後，從存放新文章id的列表中移除
-      const index = newArticle_id.indexOf(selectedArticle.id)
+      const index = newArticleID_arr.indexOf(selectedArticle.id)
       if (index !== -1) {
-        newArticle_id.splice(index, 1) // 移除第一個匹配元素
+        newArticleID_arr.splice(index, 1) // 移除第一個匹配元素
       }
     }else{
       // put
@@ -437,7 +481,7 @@ function selectArticle(index){
 
   alert('選擇的文章id:'+selectedArticle.id+', 列表index:'+selectedIndex.value);
 
-  if (newArticle_id.includes(selectedArticle.id)){
+  if (newArticleID_arr.includes(selectedArticle.id)){
     alert('新文章')
     isEditing.value = true
   }else{
@@ -463,7 +507,7 @@ async function fetchTextFromAPI() {
 
     const id = articles.length ;
 
-    newArticle_id.push(id);
+    newArticleID_arr.push(id);
 
     articles.unshift({
       'id': id,
@@ -503,7 +547,7 @@ function deleteArticle(){
   selectArticle(0);
 
   // 檢查是否為尚未儲存的文章，如果是的話直接離開不用執行後面api
-  if (newArticle_id.includes(selectedArticle.id)) return
+  if (newArticleID_arr.includes(selectedArticle.id)) return
 
   // 呼叫API從資料庫刪除該篇文章
   deleteArticleAPI(id);
@@ -526,7 +570,7 @@ async function deleteArticleAPI(id){
 async function saveMarkedword(word){
 
     // 檢查文章是否已經儲存
-    if (newArticle_id.includes(selectedArticle.id)){
+    if (newArticleID_arr.includes(selectedArticle.id)){
       alert('文章尚未儲存，請先儲存!')
       return
     }
@@ -554,7 +598,7 @@ async function saveMarkedword(word){
 
 async function deleteMarkedWord(word) {
   alert('刪除')
-  if (newArticle_id.includes(selectedArticle.id)) return
+  if (newArticleID_arr.includes(selectedArticle.id)) return
   
   let response
 
