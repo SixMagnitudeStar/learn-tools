@@ -51,13 +51,14 @@
         
       <div v-else>
       <span
-        v-for="(block, index) in selectedArticle.blocks"
+        v-for="(block, index) in sortedBlocks"
         :key="index"
         :class="{ 
           block: true, 
           active: block.marked
         }"
         @click="toggleWord(index)"
+
         v-html="block.text"
       ></span>
       </div>
@@ -243,7 +244,7 @@ async function getArticles() {
     const response = await api.get('/articles',  { headers: headers })
 
     console.log('文章資料:', response.data)
-    return Array.isArray(response.data.articles) ? response.data.articles : [];
+    return Array.isArray(response.data) ? response.data : [];
     // return response.data.articles
   } catch (error) {
     console.error('取得文章失敗:', error)
@@ -257,8 +258,9 @@ onMounted(async ()=>{
 
   // 載入頁面時抓取文章
   const fetched = await getArticles()
+  alert('fet:'+fetched)
   articles.push(...fetched)  // 展開陣列
-
+  alert('articles:'+JSON.stringify(articles));
   await nextTick()
 
   selectArticle(0) // 讀取第一篇文章
@@ -301,13 +303,14 @@ function createNewArticle(){
 
   // focus標題區塊
   editableTitle.value.focus();
+  alert('focus title');
 }
 
 
 
 // 動態偵測文章邊提區塊，將新文章內容轉為單字block
 const editorRef = ref(null)
-// const  parseArticleText = computed(() => {
+// const  icleText = computed(() => {
 //   //
 //   const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
 
@@ -326,6 +329,27 @@ const editorRef = ref(null)
 //     return  { text: word ,text_type:'punctuation'}
 //   })
 // })
+
+
+const sortedBlocks = computed(() => {
+  alert('1')
+  const blocks = selectedArticle.value?.blocks || [];
+  if (!blocks.length) return [];
+  alert('2')
+
+    // 找到開頭節點（previous_index 為 null）
+  let current = blocks[0];
+  const result = [];
+
+  // 沿 next_index 串起來
+  while (current) {
+    result.push(current);
+    if (current.next_index === null) break;
+    current = blocks[current.next_index];
+  }
+  alert('result:'+JSON.stringify(result));
+  return result;
+})
 
 
 const parseArticleText = computed(() => {
@@ -366,6 +390,9 @@ const parseArticleText = computed(() => {
     }
   })
 })
+
+
+
 
 // // 判斷是不是字元(單一字元)
 function isTextChar(char) {
@@ -415,15 +442,89 @@ async function saveArticle() {
    
     }
 
+    alert('文章新增成功!')
+    selectArticle(0)
     console.log('新增成功', response.data)
   } catch(err){
     console.error('422 details:', err.response?.data?.detail)
     console.error(err)
+    alert('文章新增失敗')
   }
 }
 
 ///////////////////////////////////////////////////////////////
 
+
+
+
+
+/////// 文字區塊鏈異動/span異動
+
+// let wordChangeRecord = reactive([]);
+
+// function wordchange(index,block){
+//   //
+
+//   // 1. 單字異動，先keep他的previous和next
+//   // 2. 正則表達式重新解析整個單字
+//   // 3. 判斷僅修改block text還是需要異動鏈 (解析轉換內容區塊length>1，多的區塊同樣要插入文字區塊鏈，確保各自的index、previous、next正確)
+
+//   //
+//   const pre_block = selectedArticle.blocks[block.previous_index]
+//   const next_block = selectedArticle.blocks[block.next_index]
+
+//   //
+//   const words = (block.text || '').match(/\s+|\w+|/g) || [];
+
+//   const words_block = words.map((word, idx) => {
+
+//     let item = {
+//       index: idx === 0 ? index : selectedArticle.length,
+//       text: word,
+//       previous_index: idx === 0 ? null : idx - 1,
+//       next_index: idx === length - 1 ? null : idx + 1
+//     }
+
+//     // 空白字元
+//     if (word.trim() === '') {
+//       return {
+//         index: index+idx,
+//         text: word,
+//         text_type: 'blank',
+//         previous_index: idx === 0 ? null : idx - 1,
+//         next_index: idx === length - 1 ? null : idx + 1
+//       }
+//     }
+
+//     // 單字
+//     if (isWord(word)) {
+//       return {
+//         index: idx,
+//         text: word,
+//         text_type: 'word',
+//         previous_index: idx === 0 ? null : idx - 1,
+//         next_index: idx === length - 1 ? null : idx + 1
+//       }
+//     }
+
+//     // 標點或其他
+//     return {
+//       index: idx,
+//       text: word,
+//       text_type: 'punctuation',
+//       previous_index: idx === 0 ? null : idx - 1,
+//       next_index: idx === length - 1 ? null : idx + 1
+//     }
+//   })
+ 
+
+
+//   const rec = {
+//     article_id: block.articleid 
+//   }
+
+
+// }
 
 
 
@@ -443,7 +544,7 @@ async function saveArticle() {
 
 // 切換某個單字的高亮狀態
 function toggleWord(index) {
-  if (!parsedWords.value[index].clickable) return
+  if (!parsedWords.value[index].clickable || isEditing.value) return
 
   if (!selectedArticle) return
 
@@ -475,7 +576,7 @@ function selectArticle(index){
   nextTick(() => {
     if (editorRef.value) {
       editorRef.value.innerText = selectedArticle.content
-      editorRef.value.focus()
+      //editorRef.value.focus()
     }
   })
 
