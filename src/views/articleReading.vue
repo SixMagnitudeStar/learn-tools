@@ -1,6 +1,7 @@
 <template>
   <div id="container">
     <div >
+      <button @click="showblock">顯示block</button>
       <span class="iconBox">
         <div class="tooltip">
           <img @click="createNewArticle" class="icon" src="../assets/plus.png" alt="建立文章" title="建立文章"/>
@@ -49,16 +50,20 @@
          ref="editorRef"
         ></div>
         
-      <div v-else>
+      <div id="spandiv" v-else
+        contenteditable="true"
+        @input="onDivInput"
+      >
       <span
         v-for="(block, index) in sortedBlocks"
         :key="index"
+        :data-index="index"
         :class="{ 
           block: true, 
           active: block.marked
         }"
         @click="toggleWord(index)"
-
+   
         v-html="block.text"
       ></span>
       </div>
@@ -109,7 +114,7 @@ const headers = {
   Authorization: `Bearer ${auth.token}`
 }
 
-const selectedArticle = reactive({
+const selectedArticle = ref({
   'id': 0,
   'title': '',
   'content': '',
@@ -118,6 +123,56 @@ const selectedArticle = reactive({
 })
 
 
+
+
+function refreshSpan(){
+
+  //
+  alert('刷新span');
+  const container = document.querySelector('#spandiv');
+
+  // 假設你的資料陣列
+  const blocks = [
+    { text: 'how', marked: false },
+    { text: 'are', marked: true },
+    { text: 'you', marked: false }
+  ];
+
+  // 清空容器
+  container.innerHTML = '';
+
+  // 依資料生成 span
+  sortedBlocks.value.forEach((block, index) => {
+    const span = document.createElement('span');
+    span.innerText = block.text;                // 設定文字
+    span.dataset.index = index;                 // 儲存 index
+    span.classList.add('block');               // 加 class
+    if (block.marked) span.classList.add('active'); // 條件 class
+    span.contentEditable = 'true';             // 可編輯
+
+    // 可以加事件
+    span.addEventListener('click', () => {
+      console.log('點擊 span:', index);
+    });
+
+    container.appendChild(span);
+  });
+}
+
+
+function showblock(){
+
+  const container = document.querySelector('.article-content');
+  const spans = container.querySelectorAll('span');
+
+  // 連接所有文字
+  const combinedText = Array.from(spans)
+    .map(span => span.innerText)   // 或 span.textContent
+    .join(' ');                    // 空格分隔，也可以用 '' 連接
+
+  alert(combinedText);
+
+}
 
 // const articleText = ref("")
 
@@ -158,7 +213,7 @@ const noteArea = ref(null);
 
 // 編輯器內容更新
 function updateContent(e) {
-  selectedArticle.content = e.target.innerText // 或 innerHTML，看你要不要保留格式
+  selectedArticle.value.content = e.target.innerText // 或 innerHTML，看你要不要保留格式
 }
 
 
@@ -192,7 +247,7 @@ function updateContent(e) {
 // 全局匹配（global），會返回 所有匹配到的結果，而不只第一個
 const parsedWords = computed(() => {
 
-  const words = (selectedArticle.content || '').match(/\s+|\w+|[^\w\s]/g) || []
+  const words = (selectedArticle.value.content || '').match(/\s+|\w+|[^\w\s]/g) || []
   return words.map((word) => {
     if ((word.trim() != '') || (!isWord(word))){
       return { html: word,  clickable: false } // 空白原樣回傳
@@ -208,7 +263,7 @@ const parsedWords = computed(() => {
 
 // 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
 function articleTitleChange(e){
-  selectedArticle.title = e.target.innerText;
+  selectedArticle.value.title = e.target.innerText;
 }
 
 
@@ -265,7 +320,7 @@ onMounted(async ()=>{
 
   selectArticle(0) // 讀取第一篇文章
 
-  noteArea.value.innerText = selectedArticle.note;
+  noteArea.value.innerText = selectedArticle.value.note;
 
 })
 
@@ -331,6 +386,17 @@ const editorRef = ref(null)
 // })
 
 
+// 使用響應式赋值代替 Object.assign，確保seletecArticle的異動能被追蹤
+function updateSelectedArticle(fetchedArticle) {
+  Object.keys(fetchedArticle).forEach(key => {
+    selectedArticle.value[key] = fetchedArticle[key]
+  })
+}
+
+
+
+
+
 const sortedBlocks = computed(() => {
   alert('1')
   const blocks = selectedArticle.value?.blocks || [];
@@ -347,9 +413,15 @@ const sortedBlocks = computed(() => {
     if (current.next_index === null) break;
     current = blocks[current.next_index];
   }
-  alert('result:'+JSON.stringify(result));
+
+
   return result;
 })
+
+// 監聽 computed 的變化
+watch(sortedBlocks, (newVal) => {
+  refreshSpan(); // 每次 sortedBlocks 更新時呼叫
+});
 
 
 const parseArticleText = computed(() => {
@@ -409,14 +481,14 @@ function isWord(str) {
 async function saveArticle() {
 
   // 將編輯區塊文字轉換後的block寫入 選擇文章物件 內
-  selectedArticle.blocks = parseArticleText;
+  selectedArticle.value.blocks = parseArticleText;
 
   const body = {
-    id: selectedArticle.id,
-    title: selectedArticle.title,
-    content: selectedArticle.content,
+    id: selectedArticle.value.id,
+    title: selectedArticle.value.title,
+    content: selectedArticle.value.content,
 
-    note: selectedArticle.note || '', // 添加預設值
+    note: selectedArticle.value.note || '', // 添加預設值
     
     blocks: parseArticleText.value || []
   }
@@ -432,7 +504,7 @@ async function saveArticle() {
       response = await api.post('/article', body, { headers: headers })
       
       // 建立文章儲存後，從存放新文章id的列表中移除
-      const index = newArticleID_arr.indexOf(selectedArticle.id)
+      const index = newArticleID_arr.indexOf(selectedArticle.value.id)
       if (index !== -1) {
         newArticleID_arr.splice(index, 1) // 移除第一個匹配元素
       }
@@ -460,71 +532,75 @@ async function saveArticle() {
 
 /////// 文字區塊鏈異動/span異動
 
-// let wordChangeRecord = reactive([]);
+//let wordChangeRecord = reactive([]);
 
-// function wordchange(index,block){
-//   //
+function wordchange(block, index){
+  //
+  alert('觸發');
+  // 1. 單字異動，先keep他的previous和next
+  // 2. 正則表達式重新解析整個單字
+  // 3. 判斷僅修改block text還是需要異動鏈 (解析轉換內容區塊length>1，多的區塊同樣要插入文字區塊鏈，確保各自的index、previous、next正確)
 
-//   // 1. 單字異動，先keep他的previous和next
-//   // 2. 正則表達式重新解析整個單字
-//   // 3. 判斷僅修改block text還是需要異動鏈 (解析轉換內容區塊length>1，多的區塊同樣要插入文字區塊鏈，確保各自的index、previous、next正確)
+  //
+  // const pre_block = selectedArticle.blocks[block.previous_index]
+  // const next_block = selectedArticle.blocks[block.next_index]
 
-//   //
-//   const pre_block = selectedArticle.blocks[block.previous_index]
-//   const next_block = selectedArticle.blocks[block.next_index]
+  const preIdx = block.previous_index;
+  const nextIdx = block.next_index;
+  //
+  const words = (block.text || '').match(/\s+|\w+|/g) || [];
 
-//   //
-//   const words = (block.text || '').match(/\s+|\w+|/g) || [];
+  const new_words_block = words.map((word, idx) => {
 
-//   const words_block = words.map((word, idx) => {
+    let item = {
+      index: 0,
+      text_type: 'punctuation',
+      text: word,
+      previous_index: 0,
+      next_index: 0
+    }
 
-//     let item = {
-//       index: idx === 0 ? index : selectedArticle.length,
-//       text: word,
-//       previous_index: idx === 0 ? null : idx - 1,
-//       next_index: idx === length - 1 ? null : idx + 1
-//     }
+    // 空白字元
+    if (word.trim() === '') {
+      item.text_type = 'blank'
+      return item
+    }
 
-//     // 空白字元
-//     if (word.trim() === '') {
-//       return {
-//         index: index+idx,
-//         text: word,
-//         text_type: 'blank',
-//         previous_index: idx === 0 ? null : idx - 1,
-//         next_index: idx === length - 1 ? null : idx + 1
-//       }
-//     }
+    // 單字
+    if (isWord(word)) {
+      item.text_type = 'word'
+    }
 
-//     // 單字
-//     if (isWord(word)) {
-//       return {
-//         index: idx,
-//         text: word,
-//         text_type: 'word',
-//         previous_index: idx === 0 ? null : idx - 1,
-//         next_index: idx === length - 1 ? null : idx + 1
-//       }
-//     }
-
-//     // 標點或其他
-//     return {
-//       index: idx,
-//       text: word,
-//       text_type: 'punctuation',
-//       previous_index: idx === 0 ? null : idx - 1,
-//       next_index: idx === length - 1 ? null : idx + 1
-//     }
-//   })
+    // 標點或其他
+    return item
+  })
  
 
 
-//   const rec = {
-//     article_id: block.articleid 
-//   }
+  new_words_block.forEach((item, i) => {
 
 
-// }
+        // 第一個單字寫在原本的位置
+    if (i === 0){
+
+      item.index = index; //索引為本來的索引
+      item.previous_index = preIdx
+
+      item.next_index = new_words_block.length ===1 ? nextIdx : selectedArticle.value.blocks.length
+
+      selectedArticle.value.blocks[index] = item;
+      return 
+    }
+
+    item.index = selectedArticle.value.block.length;
+    item.previous_index = new_words_block[i-1].index;
+    item.next_index = i === new_words_block.length-1 ? nextIdx :selectedArticle.value.blocks.length+1
+    selectedArticle.value.blocks.push(item);
+    //
+  });
+
+
+}
 
 
 
@@ -544,55 +620,50 @@ async function saveArticle() {
 
 // 切換某個單字的高亮狀態
 function toggleWord(index) {
-  if (!parsedWords.value[index].clickable || isEditing.value) return
+  // if (!parsedWords.value[index].clickable || isEditing.value) return
 
-  if (!selectedArticle) return
+  // if (!selectedArticle) return
 
-  const i = String(index);
+  // const i = String(index);
 
-  // const i = activeIndexes.value.indexOf(index)
-  // if (i === -1) {
-  //   activeIndexes.value.push(index)
-  // } else {
-  //   activeIndexes.value.splice(i, 1)
+  // // const i = activeIndexes.value.indexOf(index)
+  // // if (i === -1) {
+  // //   activeIndexes.value.push(index)
+  // // } else {
+  // //   activeIndexes.value.splice(i, 1)
+  // // }
+
+  // const found = selectedArticle.value.tags_css.find(item => item.index === i)
+  // if (!found){
+  //   selectedArticle.tags_css.push({'index':i})
+  //   saveMarkedword(parsedWords.value[index].html)
+  // }else{
+  //   selectedArticle.tags_css = selectedArticle.tags_css.filter(item => item.index !== i)
+  //   deleteMarkedWord(parsedWords.value[index].html)
   // }
-
-  const found = selectedArticle.tags_css.find(item => item.index === i)
-  if (!found){
-    selectedArticle.tags_css.push({'index':i})
-    saveMarkedword(parsedWords.value[index].html)
-  }else{
-    selectedArticle.tags_css = selectedArticle.tags_css.filter(item => item.index !== i)
-    deleteMarkedWord(parsedWords.value[index].html)
-  }
 }
 
 
 
 
+
 function selectArticle(index){
-  selectedIndex.value=index;
-  Object.assign(selectedArticle,articles[index]);
+  Object.assign(selectedArticle.value,articles[index]);
   nextTick(() => {
     if (editorRef.value) {
-      editorRef.value.innerText = selectedArticle.content
-      //editorRef.value.focus()
+      editorRef.value.innerText = selectedArticle.value.content
     }
   })
 
-  alert('選擇的文章id:'+selectedArticle.id+', 列表index:'+selectedIndex.value);
+  alert('選擇的文章id:'+selectedArticle.value.id+', 列表index:'+selectedIndex.value);
 
-  if (newArticleID_arr.includes(selectedArticle.id)){
+  if (newArticleID_arr.includes(selectedArticle.value.id)){
     alert('新文章')
     isEditing.value = true
   }else{
     alert('舊文章')
     isEditing.value = false
   }
-
-//  alert(JSON.stringify(selectedArticle))
-  //text.value = articles[index].content;
-// articleTitle.value = articles[index].title;
 }
 
 
@@ -638,7 +709,7 @@ async function fetchTextFromAPI() {
 function deleteArticle(){
 
   // 紀錄刪除文章的id
-  const id = selectedArticle.id
+  const id = selectedArticle.value.id
   alert('刪除文章id:'+id+', 移除文章index:'+selectedIndex.value);
   // 將當前選取文章從文章列表中移除
 
@@ -648,7 +719,7 @@ function deleteArticle(){
   selectArticle(0);
 
   // 檢查是否為尚未儲存的文章，如果是的話直接離開不用執行後面api
-  if (newArticleID_arr.includes(selectedArticle.id)) return
+  if (newArticleID_arr.includes(selectedArticle.value.id)) return
 
   // 呼叫API從資料庫刪除該篇文章
   deleteArticleAPI(id);
@@ -671,7 +742,7 @@ async function deleteArticleAPI(id){
 async function saveMarkedword(word){
 
     // 檢查文章是否已經儲存
-    if (newArticleID_arr.includes(selectedArticle.id)){
+    if (newArticleID_arr.includes(selectedArticle.value.id)){
       alert('文章尚未儲存，請先儲存!')
       return
     }
@@ -680,7 +751,7 @@ async function saveMarkedword(word){
     let response
 
     const body = {
-      article_id: selectedArticle.id,
+      article_id: selectedArticle.value.id,
       word: word
     }
 
@@ -699,12 +770,12 @@ async function saveMarkedword(word){
 
 async function deleteMarkedWord(word) {
   alert('刪除')
-  if (newArticleID_arr.includes(selectedArticle.id)) return
+  if (newArticleID_arr.includes(selectedArticle.value.id)) return
   
   let response
 
   const params = {
-    article_id: selectedArticle.id,
+    article_id: selectedArticle.value.id,
     word: word
   }
 
@@ -719,7 +790,7 @@ async function deleteMarkedWord(word) {
 
 
 
-watch(selectedArticle, (newItem) => {
+watch(selectedArticle.value, (newItem) => {
   if (editableTitle.value && editableTitle.value.innerText !== newItem.title){
     editableTitle.value.innerText = newItem.title;
   }
