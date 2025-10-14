@@ -53,8 +53,14 @@
       <div id="spandiv" v-else
         contenteditable="true"
         @input="onDivInput"
-      >
-      <span
+    
+        @keydown="onDivKeydown">
+        <span v-for="(block, index) in selectedArticle.blocks" 
+              :key="index"
+              :data-index="index">
+          {{ block.text }}
+        </span>
+      <!-- <span
         v-for="(block, index) in sortedBlocks"
         :key="index"
         :data-index="index"
@@ -65,7 +71,7 @@
         @click="toggleWord(index)"
    
         v-html="block.text"
-      ></span>
+      ></span> -->
       </div>
     </div>
 
@@ -132,11 +138,7 @@ function refreshSpan(){
   const container = document.querySelector('#spandiv');
 
   // 假設你的資料陣列
-  const blocks = [
-    { text: 'how', marked: false },
-    { text: 'are', marked: true },
-    { text: 'you', marked: false }
-  ];
+
 
   // 清空容器
   container.innerHTML = '';
@@ -160,17 +162,76 @@ function refreshSpan(){
 }
 
 
+function onDivKeydown(e) {
+  alert('key!')
+  if (e.code === 'Space') {
+    alert('進入')
+    e.preventDefault(); // 阻止空白鍵輸入到 span
+    const sel = window.getSelection();
+    if (!sel.rangeCount) return;
+
+    const range = sel.getRangeAt(0);
+    let node = range.startContainer;
+    const span = node.nodeType === 3 ? node.parentElement : node;
+    const parentSpan = span.closest('span');
+    if (!parentSpan) return;
+
+    const index = parseInt(parentSpan.dataset.index);
+
+    // 在陣列 index + 1 插入新元素
+    alert('插入');
+    selectedArticle.value.blocks.splice(index + 1, 0, { text: ' ', type: 'word', marked: false });
+
+    // 下一個 tick 等 DOM 更新後，把光標放到新 span
+    nextTick(() => {
+      const newSpan = document.querySelector(`span[data-index="${index + 1}"]`);
+      if (!newSpan) return;
+
+      const range = document.createRange();
+      range.setStart(newSpan, 0);
+      range.collapse(true);
+
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      alert('focus');
+      newSpan.focus();
+    });
+  }
+}
+
+
+function onDivInput(e) {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+
+  const range = sel.getRangeAt(0);
+  const node = range.startContainer; // 光標所在節點
+
+  // 往上找最近的 span
+  const span = node.nodeType === 3 ? node.parentElement : node; 
+  const parentSpan = span.closest('span');
+
+  if (parentSpan) {
+    const index = parentSpan.dataset.index;
+    alert('光標在 span index:', index);
+  } else {
+    alert('光標不在任何 span 中');
+  }
+}
+
 function showblock(){
 
-  const container = document.querySelector('.article-content');
-  const spans = container.querySelectorAll('span');
+  alert(JSON.stringify(selectedArticle.value.blocks))
+  // const container = document.querySelector('.article-content');
+  // const spans = container.querySelectorAll('span');
 
-  // 連接所有文字
-  const combinedText = Array.from(spans)
-    .map(span => span.innerText)   // 或 span.textContent
-    .join(' ');                    // 空格分隔，也可以用 '' 連接
+  // // 連接所有文字
+  // const combinedText = Array.from(spans)
+  //   .map(span => span.innerText)   // 或 span.textContent
+  //   .join(' ');                    // 空格分隔，也可以用 '' 連接
 
-  alert(combinedText);
+  // alert(combinedText);
 
 }
 
@@ -420,7 +481,7 @@ const sortedBlocks = computed(() => {
 
 // 監聽 computed 的變化
 watch(sortedBlocks, (newVal) => {
-  refreshSpan(); // 每次 sortedBlocks 更新時呼叫
+  //refreshSpan(); // 每次 sortedBlocks 更新時呼叫
 });
 
 
