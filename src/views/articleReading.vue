@@ -274,7 +274,12 @@ const noteArea = ref(null);
 
 // 編輯器內容更新
 function updateContent(e) {
+  alert('輸入內容')
   selectedArticle.value.content = e.target.innerText // 或 innerHTML，看你要不要保留格式
+  articles[selectedIndex.value].content = e.target.innerText;
+  
+  alert('異動內容後值: '+JSON.stringify(selectedArticle.value));
+  alert('異動內容後articles值: '+JSON.stringify(articles));
 }
 
 
@@ -324,7 +329,10 @@ const parsedWords = computed(() => {
 
 // 文章標題change事件，將最新的異動text值寫入綁定的標題值變數
 function articleTitleChange(e){
+  alert('輸入標題');
   selectedArticle.value.title = e.target.innerText;
+
+  articles[selectedIndex.value].title = e.target.innerText;
 }
 
 
@@ -409,7 +417,7 @@ function createNewArticle(){
     id: newArticle_id,
     title: '',
     content: '',
-    block: []
+    blocks: []
   });
 
 
@@ -542,7 +550,12 @@ function isWord(str) {
 async function saveArticle() {
 
   // 將編輯區塊文字轉換後的block寫入 選擇文章物件 內
-  selectedArticle.value.blocks = parseArticleText;
+
+
+  Object.assign(selectedArticle.value.blocks,parseArticleText.value);
+  Object.assign(articles[selectedIndex.value].blocks, parseArticleText.value);
+  articles[selectedIndex.value].blocks = parseArticleText.value;
+
 
   const body = {
     id: selectedArticle.value.id,
@@ -551,7 +564,7 @@ async function saveArticle() {
 
     note: selectedArticle.value.note || '', // 添加預設值
     
-    blocks: parseArticleText.value || []
+    blocks: selectedArticle.value.blocks || []
   }
   console.log('檢查body: '+JSON.stringify(body));
 
@@ -709,14 +722,22 @@ function toggleWord(index) {
 
 
 function selectArticle(index){
+
+
+  selectedIndex.value = index;
+  //selectedArticle.value = articles[index];
   Object.assign(selectedArticle.value,articles[index]);
+
+
   nextTick(() => {
     if (editorRef.value) {
       editorRef.value.innerText = selectedArticle.value.content
     }
   })
 
-  alert('選擇的文章id:'+selectedArticle.value.id+', 列表index:'+selectedIndex.value);
+  alert('選擇的文章id:'+selectedArticle.value.id+', 列表index..:'+selectedIndex.value);
+  alert('articles: '+JSON.stringify(articles));
+  alert('selectedArticle: '+ JSON.stringify(selectedArticle.value));
 
   if (newArticleID_arr.includes(selectedArticle.value.id)){
     alert('新文章')
@@ -859,6 +880,7 @@ watch(selectedArticle.value, (newItem) => {
   if (noteArea.value.innerText != newItem.note){
     noteArea.value.innerText = newItem.note;
   }
+
 
   // if (text.value != newItem.content){
   //   text.value = newItem.content;
