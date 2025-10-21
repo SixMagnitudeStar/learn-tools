@@ -16,9 +16,10 @@
           <img @click="saveArticle()" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
           <div class="tooltip-text">儲存文章</div>
         </div>
-        <div class="tooltip">
-          <img  class="icon" src="../assets/edit.png" alt="編輯文章" title="編輯文章">
-          <div class="tooltip-text">編輯文章</div>
+        <div class="tooltip" :class="{ 'editing-icon': isEditing }">
+          <img  @click="editArticle()"  class="icon" src="../assets/edit.png" alt="編輯文章" title="編輯文章" >
+          <div class="tooltip-text"
+          >編輯文章</div>
         </div>
         <div class="tooltip">
           <img @click="deleteArticle()" class="icon" src="../assets/bin.png" alt="刪除文章" title="刪除文章">
@@ -43,7 +44,7 @@
           ref="editableTitle"
           spellcheck="false"
       ></h1>
-      <div v-if="isEditing" 
+      <div v-if="newArticleID_arr.includes(selectedArticle.index)" 
         class="article-editor" 
         contenteditable="true"
         @input="updateContent"
@@ -51,16 +52,17 @@
         ></div>
         
       <div id="spandiv" v-else
-        contenteditable="true"
+        :contenteditable="isEditing"
         @input="onDivInput"
-    
-        @keydown="onDivKeydown">
-        <span v-for="(block, index) in selectedArticle.blocks" 
+        
+        @keydown="onDivKeydown"
+        >
+        <!-- <span v-for="(block, index) in selectedArticle.blocks" 
               :key="index"
               :data-index="index">
           {{ block.text }}
-        </span>
-      <!-- <span
+        </span> -->
+      <span
         v-for="(block, index) in sortedBlocks"
         :key="index"
         :data-index="index"
@@ -71,7 +73,7 @@
         @click="toggleWord(index)"
    
         v-html="block.text"
-      ></span> -->
+      ></span>
       </div>
     </div>
 
@@ -131,6 +133,8 @@ const selectedArticle = ref({
 
 
 
+
+
 function refreshSpan(){
 
   //
@@ -143,7 +147,8 @@ function refreshSpan(){
   // 清空容器
   container.innerHTML = '';
 
-  // 依資料生成 span
+  // 依資料生成 span 
+  // 這個用不到了
   sortedBlocks.value.forEach((block, index) => {
     const span = document.createElement('span');
     span.innerText = block.text;                // 設定文字
@@ -163,61 +168,61 @@ function refreshSpan(){
 
 
 function onDivKeydown(e) {
-  alert('key!')
-  if (e.code === 'Space') {
-    alert('進入')
-    e.preventDefault(); // 阻止空白鍵輸入到 span
-    const sel = window.getSelection();
-    if (!sel.rangeCount) return;
+  // alert('key!')
+  // if (e.code === 'Space') {
+  //   alert('進入')
+  //   e.preventDefault(); // 阻止空白鍵輸入到 span
+  //   const sel = window.getSelection();
+  //   if (!sel.rangeCount) return;
 
-    const range = sel.getRangeAt(0);
-    let node = range.startContainer;
-    const span = node.nodeType === 3 ? node.parentElement : node;
-    const parentSpan = span.closest('span');
-    if (!parentSpan) return;
+  //   const range = sel.getRangeAt(0);
+  //   let node = range.startContainer;
+  //   const span = node.nodeType === 3 ? node.parentElement : node;
+  //   const parentSpan = span.closest('span');
+  //   if (!parentSpan) return;
 
-    const index = parseInt(parentSpan.dataset.index);
+  //   const index = parseInt(parentSpan.dataset.index);
 
-    // 在陣列 index + 1 插入新元素
-    alert('插入');
-    selectedArticle.value.blocks.splice(index + 1, 0, { text: ' ', type: 'word', marked: false });
+  //   // 在陣列 index + 1 插入新元素
+  //   alert('插入');
+  //   selectedArticle.value.blocks.splice(index + 1, 0, { text: ' ', type: 'word', marked: false });
+  //   alert('index: '+index+' new index: '+index+1);
+  //   // 下一個 tick 等 DOM 更新後，把光標放到新 span
+  //   nextTick(() => {
+  //     const newSpan = document.querySelector(`span[data-index="${index + 1}"]`);
+  //     if (!newSpan) return;
 
-    // 下一個 tick 等 DOM 更新後，把光標放到新 span
-    nextTick(() => {
-      const newSpan = document.querySelector(`span[data-index="${index + 1}"]`);
-      if (!newSpan) return;
+  //     const range = document.createRange();
+  //     range.setStart(newSpan, 0);
+  //     range.collapse(true);
 
-      const range = document.createRange();
-      range.setStart(newSpan, 0);
-      range.collapse(true);
-
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-      alert('focus');
-      newSpan.focus();
-    });
-  }
+  //     const sel = window.getSelection();
+  //     sel.removeAllRanges();
+  //     sel.addRange(range);
+  //     alert('focus');
+  //     newSpan.focus();
+  //   });
+  // }
 }
 
 
 function onDivInput(e) {
-  const sel = window.getSelection();
-  if (!sel.rangeCount) return;
+  // const sel = window.getSelection();
+  // if (!sel.rangeCount) return;
 
-  const range = sel.getRangeAt(0);
-  const node = range.startContainer; // 光標所在節點
+  // const range = sel.getRangeAt(0);
+  // const node = range.startContainer; // 光標所在節點
 
-  // 往上找最近的 span
-  const span = node.nodeType === 3 ? node.parentElement : node; 
-  const parentSpan = span.closest('span');
+  // // 往上找最近的 span
+  // const span = node.nodeType === 3 ? node.parentElement : node; 
+  // const parentSpan = span.closest('span');
 
-  if (parentSpan) {
-    const index = parentSpan.dataset.index;
-    alert('光標在 span index:', index);
-  } else {
-    alert('光標不在任何 span 中');
-  }
+  // if (parentSpan) {
+  //   const index = parentSpan.dataset.index;
+  //   alert('光標在 span index:', index);
+  // } else {
+  //   alert('光標不在任何 span 中');
+  // }
 }
 
 function showblock(){
@@ -394,6 +399,11 @@ onMounted(async ()=>{
 })
 
 
+function editArticle(){
+  alert('editing');
+  isEditing.value = true;
+  
+}
 
 
 
@@ -463,14 +473,32 @@ function updateSelectedArticle(fetchedArticle) {
 }
 
 
+// span綁上事件
+function changeblock(index){
+  //
+  sortedBlocks[index].edit = true;
+}
+
+
+// 重新連結所有單字blocks
+function reLinkBlcoks(){
+  
+  //1 遍歷找出edit的span (如果內容為空視為刪除,最後一筆資料index改為該index，該筆資料刪掉)
+  
+  //2 正則表達式將span內容拆解成陣列，開頭元素寫入原位置，剩餘的放末尾
+
+  //3 建立一個api異動block表  做2的同時，將每個元素依據修改或修增，插入一筆資料到該list裡，最後提交一棟
+  
+  //4 後端新增一個api，接收異動API表，修改的就依據index找到該資料修改，新增的就把新block資料寫入資料庫
+
+
+}
 
 
 
 const sortedBlocks = computed(() => {
-  alert('1')
   const blocks = selectedArticle.value?.blocks || [];
   if (!blocks.length) return [];
-  alert('2')
 
     // 找到開頭節點（previous_index 為 null）
   let current = blocks[0];
@@ -1053,7 +1081,12 @@ watch(selectedArticle.value, (newItem) => {
 .input-bar{
   position: fixed;
   display: flex;
+}
 
+
+.editing-icon{
+  background-color: #ddd; /* 滑上去變淺灰 */
+  border-radius: 8px;
 }
 
 
