@@ -52,11 +52,10 @@
         ></div>
         
       <div id="spandiv" v-else
-        :contenteditable="isEditing"
+
         @input="onDivInput"
         
-        @keydown="onDivKeydown"
-        >
+        @keydown="onDivKeydown">
         <!-- <span v-for="(block, index) in selectedArticle.blocks" 
               :key="index"
               :data-index="index">
@@ -66,12 +65,15 @@
         v-for="(block, index) in sortedBlocks"
         :key="index"
         :data-index="index"
+        :data-previousIndex="block.previous_index"
+        :data-nextIndex="block.next_index"
         :class="{ 
           block: true, 
           active: block.marked
         }"
+        :contenteditable="isEditing"
         @click="toggleWord(index)"
-   
+        @input="changeblock(block, index, $event)"
         v-html="block.text"
       ></span>
       </div>
@@ -474,18 +476,128 @@ function updateSelectedArticle(fetchedArticle) {
 
 
 // span綁上事件
-function changeblock(index){
-  //
-  sortedBlocks[index].edit = true;
+function changeblock(block, index){
+  // 取得 span 元素
+  // const spanEl = event.target;
+  const targetBlock = selectedArticle.value.blocks.find(b => b.index === index);
+  targetBlock.edited = true;
+
+
+    // 將 data-edited 同步到 span 元素
+  const spanEl = event.target;
+  spanEl.dataset.edited = 'true'; // 或 targetBlock.edited.toString()
+
+  // alert('異動block: '+targetBlock.text);
+  // alert('整筆: '+JSON.stringify(selectedArticle.value.blocks));
+  // targetBlock.text = spanEl.innerText;
+  // alert('新值: '+targetBlock.text);
+  // data-index
+  // const dataIndex = spanEl.dataset.index;
+
+  // alert(`data-index: ${dataIndex}, v-for index: ${index}, block: ${JSON.stringify(block)}`);
+
+  // alert(JSON.stringify(block));
+  // const targetBlock = selectedArticle.value.blocks.find(b => b.index === index);
+  //  if (!targetBlock) return;  // 沒找到就退出
+
+  // if (targetBlock) {
+  //   targetBlock.edited = true
+  //   // block.text = 'New Text';
+  //   // block.marked = false;
+  // }
+
+  // alert(JSON.stringify(block));
 }
 
 
 // 重新連結所有單字blocks
 function reLinkBlcoks(){
-  
-  //1 遍歷找出edit的span (如果內容為空視為刪除,最後一筆資料index改為該index，該筆資料刪掉)
-  
-  //2 正則表達式將span內容拆解成陣列，開頭元素寫入原位置，剩餘的放末尾
+    //1 遍歷找出edit的span (如果內容為空視為刪除,最後一筆資料index改為該index，該筆資料刪掉)
+    // 找到所有 data-edited="true" 的 span
+    const editedSpans = document.querySelectorAll('span[data-edited="true"]');
+
+
+    //2 正則表達式將span內容拆解成陣列，開頭元素寫入原位置，剩餘的放末尾
+    editedSpans.forEach(span => {
+
+        // 取得編輯過的span
+        const text = span.textContent;
+
+        // 取得編輯過的span index
+        const index = span.dataset.index; // dataset屬性是字串
+
+        // 取得編輯過的previous index
+        const preIndex = span.dataset.previousIndex;
+
+        // 取得編輯過的next index
+        const nextIndex = span.dataset.nextIndex;
+
+
+        // 用正則表達式將span內容解析成新的單詞陣列
+        let wordsList =  (text || '').match(/\s+|\w+|/g) || [];
+
+
+        // 每層遍歷Keep住新block的index，方便下個元素取得上一個block的index
+        let preIdx_Of_newBlock = newBlockIndex;
+
+        // 將單詞陣列中的值轉換成block的結構，並設定index、previous index、next index 加入整個word blocks的linked list中
+        let newBlocks = wordsList.map((word, idx) => {
+
+                // 取得現在blocks陣列長度
+                const blocksLength = selectedArticle.value.blocks.length;
+                
+                let textType = '';
+
+                // 設定單字類型
+                // 1.空白字元
+                if (word.trim() === '') {
+                  textType = 'blank';
+                }
+                // 2.單字
+                else if (isWord(word)) {
+                  textType = 'word';
+                }
+                // 3.標點符號或其他
+                else{
+                  textType = 'punctuation';
+                }
+
+
+                // 當前block的index (新陣列的第一個單字放入原位置，其餘的放入末尾)
+
+                let newBlock = {
+                    index: idx === 0 ? index : blocksLength-1 + i,
+                    text: word,
+                    text_type: textType,
+                    previous_index: null,
+                    next_index: null
+                }
+                return newBlock;
+        })
+
+        // 設定新block的previous index、next index
+        for (i=0; i<newBlocks.length; i++){
+          //
+          if (i=== 0){
+            newBlocks[i].previous_index = previousIndex;
+          }else{
+            newBlocks[i].previous_index = newBlocks[i-1]
+          }
+
+          if (i=== newBlocks.length-1){
+            newBlocks[i].next_index = nextIndex;
+          }else{
+            newBlocks[i].next_index = newBlocks[i+1].index;
+          }
+        }
+                    
+
+
+        console.log(`data-index: ${index}, text: ${text}`);
+  });
+
+
+
 
   //3 建立一個api異動block表  做2的同時，將每個元素依據修改或修增，插入一筆資料到該list裡，最後提交一棟
   
@@ -493,7 +605,42 @@ function reLinkBlcoks(){
 
 
 }
+  const words = (editorRef.value?.innerText || '').match(/\s+|\w+|/g) || []
 
+  return words.map((word, idx) => {
+    const length = words.length
+
+    // 空白字元
+    if (word.trim() === '') {
+      return {
+        index: idx,
+        text: word,
+        text_type: 'blank',
+        previous_index: idx === 0 ? null : idx - 1,
+        next_index: idx === length - 1 ? null : idx + 1
+      }
+    }
+
+    // 單字
+    if (isWord(word)) {
+      return {
+        index: idx,
+        text: word,
+        text_type: 'word',
+        previous_index: idx === 0 ? null : idx - 1,
+        next_index: idx === length - 1 ? null : idx + 1
+      }
+    }
+
+    // 標點或其他
+    return {
+      index: idx,
+      text: word,
+      text_type: 'punctuation',
+      previous_index: idx === 0 ? null : idx - 1,
+      next_index: idx === length - 1 ? null : idx + 1
+    }
+  })
 
 
 const sortedBlocks = computed(() => {
@@ -703,9 +850,6 @@ function wordchange(block, index){
 
 
 }
-
-
-
 
 
 
