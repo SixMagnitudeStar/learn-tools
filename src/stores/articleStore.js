@@ -446,7 +446,15 @@ export const useArticleStore = defineStore('articleStore', () => {
           // Merge results: keep existing translations, update only the new ones
           const updatedWordsList = allWords.map(originalWord => {
             const newlyUpdated = updatedBatch.find(u => u.id === originalWord.id);
-            return newlyUpdated ? newlyUpdated : originalWord;
+            if (!newlyUpdated) {
+              return originalWord;
+            }
+            // Preserve any local-only fields such as mark_id so hover lookup stays valid.
+            return {
+              ...originalWord,
+              ...newlyUpdated,
+              mark_id: originalWord.mark_id ?? newlyUpdated.mark_id
+            };
           });
 
           selectedArticle.value.marked_words = updatedWordsList;
