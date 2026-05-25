@@ -310,6 +310,8 @@ export const useArticleStore = defineStore('articleStore', () => {
     if (block.text_type !== 'word') return;
 
     const newMarkedState = !block.marked;
+    const articleId = selectedArticle.value.id; // 取得目前文章 ID
+
     block.marked = newMarkedState;
     block.mark_id = newMarkedState ? markId : null;
 
@@ -331,7 +333,7 @@ export const useArticleStore = defineStore('articleStore', () => {
     if (newMarkedState) {
         try {
             const response = await api.post('/markedword', { 
-              "article_id": selectedArticle.value.id, 
+              "article_id": articleId, 
               "word": block.text,
               "mark_id": markId
             });
@@ -342,7 +344,7 @@ export const useArticleStore = defineStore('articleStore', () => {
     } else {
         try {
             await api.delete(`/markedword`, { 
-                params: { article_id: selectedArticle.value.id, word: block.text }
+                params: { article_id: articleId, word: block.text }
             });
             const idx = selectedArticle.value.marked_words.findIndex(w => w.word === block.text);
             if (idx > -1) {
