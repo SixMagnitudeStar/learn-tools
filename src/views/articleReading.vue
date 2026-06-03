@@ -547,27 +547,27 @@ function isWord(str) {
 }
 
 // 取得單字的翻譯 (用於滑鼠懸停顯示)
-function getWordTranslation(block) {
-  if (!block.marked || !block.mark_id || !selectedArticle.value?.marked_words) return '';
-  const wordObj = selectedArticle.value.marked_words.find(w => w.mark_id === block.mark_id);
-  return wordObj?.translation || '';
-}
+// function getWordTranslation(block) {
+//   if (!block.marked || !block.mark_id || !selectedArticle.value?.marked_words) return '';
+//   const wordObj = selectedArticle.value.marked_words.find(w => w.mark_id === block.mark_id);
+//   return wordObj?.translation || '';
+// }
 
-function handleMouseEnter(block, event) {
-  const translation = getWordTranslation(block);
-  if (translation) {
-    hoveredTranslation.value = translation;
-    const rect = event.target.getBoundingClientRect();
-    tooltipPosition.value = {
-      top: `${rect.top + window.scrollY - 40}px`,
-      left: `${rect.left + window.scrollX + rect.width / 2}px`
-    };
-  }
-}
+// function handleMouseEnter(block, event) {
+//   const translation = getWordTranslation(block);
+//   if (translation) {
+//     hoveredTranslation.value = translation;
+//     const rect = event.target.getBoundingClientRect();
+//     tooltipPosition.value = {
+//       top: `${rect.top + window.scrollY - 40}px`,
+//       left: `${rect.left + window.scrollX + rect.width / 2}px`
+//     };
+//   }
+// }
 
-function handleMouseLeave() {
-  hoveredTranslation.value = '';
-}
+// function handleMouseLeave() {
+//   hoveredTranslation.value = '';
+// }
 
 // 解析文章編輯器的內容，拆成 blocks
 const parseArticleText = computed(() => {
