@@ -53,10 +53,10 @@
               <span>中英測驗</span>
             </span>
           </router-link>
-          <router-link to="/memory-curve" class="router-link-custom">
+          <router-link to="/Forgetting-curve" class="router-link-custom">
             <span class="iconBox">
-              <img class="icon" src="@/assets/rotate.png" alt="記憶曲線" />
-              <span>記憶曲線</span>
+              <img class="icon" src="@/assets/ForgettingCurve.png" alt="遺忘曲線" />
+              <span>遺忘曲線</span>
             </span>
           </router-link>
         </div>

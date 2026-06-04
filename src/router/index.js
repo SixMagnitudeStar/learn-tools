@@ -13,7 +13,7 @@ import ForgotPasswordView from '../views/ForgotPassword.vue'
 import ResetPasswordView from '../views/ResetPassword.vue'
 import AdminDashboard from '@/views/AdminDashboard.vue'
 import SubscriptionManagement from '../views/SubscriptionManagement.vue' // <-- 新增這行
-import MemoryCurve from '@/views/MemoryCurve.vue'
+import ForgettingCurve from '@/views/ForgettingCurve.vue'
 
 //import jwtDecode from 'jwt-decode'
 
@@ -45,7 +45,7 @@ const routes = [
     
   { path: '/personalSetting', component: personalSetting},
   { path: '/EnZhQuiz', component: EnZhQuiz},
-  { path: '/memory-curve', component: MemoryCurve },
+  { path: '/Forgetting-curve', component: ForgettingCurve },
   { 
     path: '/admin/dashboard', // <-- Updated path for AdminDashboard
     name: 'AdminDashboard',
