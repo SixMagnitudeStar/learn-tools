@@ -53,6 +53,12 @@
               <span>中英測驗</span>
             </span>
           </router-link>
+          <router-link to="/Forgetting-curve" class="router-link-custom">
+            <span class="iconBox">
+              <img class="icon" src="@/assets/ForgettingCurve.png" alt="遺忘曲線" />
+              <span>遺忘曲線</span>
+            </span>
+          </router-link>
         </div>
         
         <template v-if="auth.isAdmin">

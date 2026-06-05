@@ -109,6 +109,13 @@ export default {
         <img src="@/assets/test.png" alt="EnZhQuiz" class="w-10 h-10 mr-4"/>
         <span class="text-lg font-semibold">中英測驗</span>
       </router-link>
+      <router-link
+        to="/Forgetting-curve"
+        class="home-card bg-white shadow-md rounded-lg p-6 flex flex-row items-center justify-center hover:scale-105 transition transform duration-200"
+      >
+        <img src="@/assets/ForgettingCurve.png" alt="ForgettingCurve" class="w-10 h-10 mr-4 Forgetting-curve"/>
+        <span class="text-lg font-semibold">遺忘曲線</span>
+      </router-link>
     </div>
 
     <footer class="home-footer">
@@ -155,6 +162,11 @@ body.home-bg {
   max-width: 1400px;
   margin: 0 auto;
   padding-top: 10vh;
+}
+
+.Forgetting-curve {
+  width: 108px; /* 調整寬度以適應圖像比例 */
+  height: auto;
 }
 
 .home-card {
