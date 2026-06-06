@@ -1,7 +1,10 @@
 <template>
   <div class="memory-curve-container">
     <div class="header">
-      <h1>記憶遺忘曲線複習</h1>
+      <div class="title-with-info">
+        <h1>記憶遺忘曲線複習</h1>
+        <button class="info-icon" @click="showRules = true" title="複習規則說明">i</button>
+      </div>
       <div class="stats" v-if="allWords.length">
         <div class="stat-item">
           <span class="label">今日待複習</span>
@@ -14,6 +17,31 @@
         <div class="stat-item">
           <span class="label">已精通</span>
           <span class="value">{{ graduatedCount }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 規則說明彈窗 -->
+    <div class="modal-overlay" v-if="showRules" @click.self="showRules = false">
+      <div class="modal-container rules-modal">
+        <div class="modal-header">
+          <h3>複習規則說明</h3>
+          <button @click="showRules = false" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>系統會根據你的複習次數，自動安排下一次複習的時間（間隔天數遞增）：</p>
+          <ul class="intervals-list">
+            <li><span class="stage">第 1 階段：</span>標記後 <strong>1</strong> 天</li>
+            <li><span class="stage">第 2 階段：</span>上次複習後 <strong>3</strong> 天</li>
+            <li><span class="stage">第 3 階段：</span>上次複習後 <strong>7</strong> 天</li>
+            <li><span class="stage">第 4 階段：</span>上次複習後 <strong>14</strong> 天</li>
+            <li><span class="stage">第 5 階段：</span>上次複習後 <strong>30</strong> 天</li>
+            <li><span class="stage">第 6 階段：</span>上次複習後 <strong>90</strong> 天</li>
+          </ul>
+          <p class="graduation-note">完成 6 次複習後，該單字將進入「已精通」狀態。</p>
+        </div>
+        <div class="modal-footer">
+          <button @click="showRules = false" class="btn-confirm">我知道了</button>
         </div>
       </div>
     </div>
@@ -93,6 +121,7 @@ const intervals = [1, 3, 7, 14, 30, 90];
 const allWords = ref([]);
 const loading = ref(true);
 const isFlipped = ref(false);
+const showRules = ref(false);
 
 const fetchWords = async () => {
   loading.value = true;
@@ -459,4 +488,126 @@ button {
   color: #bdc3c7;
   margin-top: 10px;
 }
+
+/* Info Icon & Modal Styles */
+.title-with-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #3498db;
+  color: white;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: opacity 0.2s;
+}
+
+.info-icon:hover {
+  opacity: 0.8;
+}
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-container {
+  background: white;
+  width: 90%;
+  max-width: 450px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #2c3e50;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #95a5a6;
+  padding: 0;
+  line-height: 1;
+}
+
+.modal-body {
+  padding: 20px;
+  color: #34495e;
+  line-height: 1.6;
+}
+
+.intervals-list {
+  list-style: none;
+  padding: 0;
+  margin: 15px 0;
+}
+
+.intervals-list li {
+  padding: 8px 12px;
+  background: #f8f9fa;
+  margin-bottom: 5px;
+  border-radius: 6px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.stage {
+  color: #7f8c8d;
+}
+
+.graduation-note {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px dashed #eee;
+  font-weight: bold;
+  color: #27ae60;
+  text-align: center;
+}
+
+.modal-footer {
+  padding: 15px 20px;
+  text-align: right;
+  background: #f9f9f9;
+}
+
+.btn-confirm {
+  background: #3498db;
+  color: white;
+  padding: 8px 20px;
+  font-size: 0.9rem;
+}
+
 </style>
