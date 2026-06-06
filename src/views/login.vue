@@ -13,8 +13,12 @@
         </button>
         <p v-if="error" style="color:red">{{ error }}</p>
         <p>Don't have an account? <router-link to="/signup">Sign Up</router-link></p>
-        <p>測試用帳號：test@test.com</p>
-        <p>測試用密碼：password</p>
+        <div class="test-login-section">
+          <button type="button" @click="useTestAccount" class="test-login-btn">
+            使用測試帳號快速登入
+          </button>
+          <p class="test-account-info">測試用帳號：test@test.com / 密碼：password</p>
+        </div>
         <p><router-link to="/forgot-password">Forgot Password?</router-link></p>
     <!-- </form> --> 
     </div>
@@ -49,6 +53,12 @@ onMounted(() => {
 onUnmounted(() => {
   document.body.classList.remove('login-bg')
 })
+
+const useTestAccount = () => {
+  email.value = 'test@test.com'
+  password.value = 'password'
+  login()
+}
 
 async function login() {
   if (isLoading.value) return;
@@ -145,6 +155,23 @@ body.login-bg {
   100% {
     opacity: 0.2;
   }
+}
+
+.test-login-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
+}
+
+.test-login-btn {
+  background-color: #2196F3 !important;
+  font-size: 0.9em;
+}
+
+.test-account-info {
+  font-size: 0.8em;
+  color: #666;
+  margin-top: 8px;
 }
 
 </style>
