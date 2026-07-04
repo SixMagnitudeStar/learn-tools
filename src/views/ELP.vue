@@ -137,6 +137,7 @@ import api from '@/axios.js'
 import { useArticleStore } from '@/stores/articleStore.js'
 import { storeToRefs } from 'pinia'
 import ArticleSelectionModal from '@/components/ArticleSelectionModal.vue'
+import { speakText } from '@/utils/tts.js'
 
 defineOptions({
   name: 'ELP'
@@ -195,9 +196,7 @@ export default {
     })
 
     const speak = (text) => {
-      const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = 'en-US'
-      speechSynthesis.speak(utterance)
+      speakText(text, 'en-US')
     }
 
     const addVocabList = async () => {

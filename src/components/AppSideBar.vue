@@ -35,16 +35,16 @@
               <span>文章閱讀</span>
             </span>
           </router-link>
-          <router-link to="/ELP" class="router-link-custom">
-            <span class="iconBox">
-              <img class="icon" src="@/assets/listening.png" alt="聽力練習" />
-              <span>聽力練習</span>
-            </span>
-          </router-link>
           <router-link to="/UnfamiliarWordsArea" class="router-link-custom">
             <span class="iconBox">
               <img class="icon" src="@/assets/flash-card.png" alt="不熟單字區" />
-              <span>不熟單字</span>
+              <span>標記詞語</span>
+            </span>
+          </router-link>
+          <router-link to="/ELP" class="router-link-custom">
+            <span class="iconBox">
+              <img class="icon" src="@/assets/listening.png" alt="聽力練習" />
+              <span>聆聽字卡</span>
             </span>
           </router-link>
           <router-link to="/EnZhQuiz" class="router-link-custom">

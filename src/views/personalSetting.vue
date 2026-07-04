@@ -54,6 +54,32 @@
         <input type="number" placeholder="設定文章字數限制 (500~2500)" />
       </div>
     </section>
+
+    <!-- 語音播放設定 -->
+    <section class="card">
+      <h2>語音播放設定 (Text-to-Speech)</h2>
+      <div class="form-group font-setting">
+        <label>語音音調 (Pitch)</label>
+        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="ttsSettings.pitch" @input="saveSettings" />
+        <span class="val-display">{{ ttsSettings.pitch }} (預設為 1.15，數值越高聲音越明亮女聲)</span>
+      </div>
+      <div class="form-group font-setting">
+        <label>播放速度 (Rate)</label>
+        <input type="range" min="0.5" max="2.0" step="0.05" v-model.number="ttsSettings.rate" @input="saveSettings" />
+        <span class="val-display">{{ ttsSettings.rate }} (預設為 0.95，數值越低發音越清晰清楚)</span>
+      </div>
+      <div class="form-group font-setting">
+        <label>偏好語音性別</label>
+        <select v-model="ttsSettings.preferredGender" @change="saveSettings" class="gender-select">
+          <option value="female">清晰明亮女聲 (推薦)</option>
+          <option value="male">沉穩男聲</option>
+        </select>
+      </div>
+      <div class="form-group test-voice-group">
+        <button type="button" @click="testVoice" class="test-btn">🔊 測試播放 (英文)</button>
+        <button type="button" @click="testVoiceZh" class="test-btn test-btn-zh">🔊 測試播放 (中文)</button>
+      </div>
+    </section>
   </div>
 </template>
 
@@ -130,10 +156,65 @@ input[type="color"] {
   border: none;
   cursor: pointer;
 }
+
+/* TTS CSS */
+.gender-select {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background-color: #fff;
+  cursor: pointer;
+}
+
+.val-display {
+  font-size: 0.9rem;
+  color: #666;
+  margin-left: 10px;
+}
+
+.test-voice-group {
+  margin-top: 15px;
+  display: flex;
+  gap: 15px;
+}
+
+.test-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.test-btn:hover {
+  background-color: #0056b3;
+}
+
+.test-btn:active {
+  transform: scale(0.98);
+}
+
+.test-btn-zh {
+  background-color: #28a745;
+}
+
+.test-btn-zh:hover {
+  background-color: #218838;
+}
+
+.font-setting input[type="range"] {
+  width: 200px;
+  cursor: pointer;
+}
 </style>
 <script setup>
 import { ref, onMounted, computed } from 'vue';
 import api from '@/axios.js';
+import { getTtsSettings, saveTtsSettings, speakText } from '@/utils/tts.js';
 
 /* global defineOptions */
 defineOptions({
@@ -146,7 +227,17 @@ const userData = ref({
   subscription: null // Initialize as null or empty object
 });
 
+const ttsSettings = ref({
+  pitch: 1.15,
+  rate: 0.95,
+  volume: 1.0,
+  preferredGender: 'female'
+});
+
 onMounted(async () => {
+  // 載入 TTS 設定
+  ttsSettings.value = getTtsSettings();
+
   try {
     const response = await api.get('/profile');
     userData.value = response.data;
@@ -154,6 +245,18 @@ onMounted(async () => {
     console.error('Failed to fetch user profile:', error);
   }
 });
+
+const saveSettings = () => {
+  saveTtsSettings(ttsSettings.value);
+};
+
+const testVoice = () => {
+  speakText("Hello! Welcome to Track Words. This is a bright and clear female voice.", "en-US");
+};
+
+const testVoiceZh = () => {
+  speakText("你好！歡迎使用單字追蹤系統。這是一個清晰明亮的女聲語音播放測試。", "zh-TW");
+};
 
 const subscriptionStatusText = computed(() => {
   if (!userData.value.subscription) return 'N/A';

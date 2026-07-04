@@ -192,6 +192,7 @@
 import { ref, computed, onMounted, onUnmounted, watch, nextTick, defineOptions, reactive } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useArticleStore } from '@/stores/articleStore.js'
+import { speakText } from '@/utils/tts.js'
 
 defineOptions({
   name: 'articleReading'
@@ -362,22 +363,8 @@ const selectedWordCount = ref(500);
 const selectedArticleLanguage = ref('English');
 
 const speak = (text) => {
-  if (!text) return;
-  const utterance = new SpeechSynthesisUtterance(text);
-  
-  // 根據後端回傳的 language 欄位動態切換 TTS 語系
-  const langMap = {
-    'en': 'en-US',
-    'ja': 'ja-JP',
-    'ko': 'ko-KR',
-    'zh': 'zh-TW'
-  };
-  
   const targetLang = selectedArticle.value?.language || 'en';
-  utterance.lang = langMap[targetLang] || 'en-US';
-  
-  console.log(`播放語系: ${utterance.lang}, 文字: ${text}`);
-  window.speechSynthesis.speak(utterance);
+  speakText(text, targetLang);
 };
 
 
@@ -461,16 +448,39 @@ function handleMouseUp() {
   }
 }
 
+let lastSyncedArticleId = null;
+
 function syncRefsToStore() {
-    if (editableTitle.value && editableTitle.value.innerText !== selectedArticle.value.title) {
-        editableTitle.value.innerText = selectedArticle.value.title
+    if (!selectedArticle.value) return;
+
+    const articleId = selectedArticle.value.id;
+    const forceSync = (articleId !== lastSyncedArticleId);
+
+    // Title
+    if (editableTitle.value) {
+        const isFocused = document.activeElement === editableTitle.value;
+        if ((forceSync || !isFocused) && editableTitle.value.innerText !== selectedArticle.value.title) {
+            editableTitle.value.innerText = selectedArticle.value.title || '';
+        }
     }
-    if (noteArea.value && noteArea.value.innerText !== selectedArticle.value.note) {
-        noteArea.value.innerText = selectedArticle.value.note
+
+    // Note
+    if (noteArea.value) {
+        const isFocused = document.activeElement === noteArea.value;
+        if ((forceSync || !isFocused) && noteArea.value.innerText !== selectedArticle.value.note) {
+            noteArea.value.innerText = selectedArticle.value.note || '';
+        }
     }
-    if (isEditing.value && editorRef.value && editorRef.value.innerHTML !== selectedArticle.value.content) {
-      editorRef.value.innerHTML = selectedArticle.value.content;
+
+    // Content (Editor)
+    if (editorRef.value) {
+        const isFocused = document.activeElement === editorRef.value;
+        if (isEditing.value && (forceSync || !isFocused) && editorRef.value.innerHTML !== selectedArticle.value.content) {
+            editorRef.value.innerHTML = selectedArticle.value.content || '';
+        }
     }
+
+    lastSyncedArticleId = articleId;
 }
 
 async function toggleTranslation() {
