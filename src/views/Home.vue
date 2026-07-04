@@ -84,14 +84,14 @@ export default {
         class="home-card bg-white shadow-md rounded-lg p-6 flex flex-row items-center justify-center hover:scale-105 transition transform duration-200"
       >
         <img src="@/assets/open-book.png" alt="Article" class="w-10 h-10 mr-4"/>
-        <span class="text-lg font-semibold">文章閱讀區</span>
+        <span class="text-lg font-semibold">文章閱讀</span>
       </router-link>
       <router-link
         to="/UnfamiliarWordsArea"
         class="home-card bg-white shadow-md rounded-lg p-6 flex flex-row items-center justify-center hover:scale-105 transition transform duration-200"
       >
         <img src="@/assets/flash-card.png" alt="Words" class="w-10 h-10 mr-4"/>
-        <span class="text-lg font-semibold">不熟單字記錄區</span>
+        <span class="text-lg font-semibold">標記詞語</span>
       </router-link>
 
       <router-link
@@ -99,7 +99,7 @@ export default {
         class="home-card bg-white shadow-md rounded-lg p-6 flex flex-row items-center justify-center hover:scale-105 transition transform duration-200"
       >
         <img src="@/assets/listening.png" alt="ELP" class="w-10 h-10 mr-4"/>
-        <span class="text-lg font-semibold">English Listening Practice</span>
+        <span class="text-lg font-semibold">聆聽字卡</span>
       </router-link>
 
       <router-link
@@ -167,6 +167,7 @@ body.home-bg {
 .Forgetting-curve {
   width: 108px; /* 調整寬度以適應圖像比例 */
   height: auto;
+  margin-left: 1%; /* 調整右邊距離 */
 }
 
 .home-card {
