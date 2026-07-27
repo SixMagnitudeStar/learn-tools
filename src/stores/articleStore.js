@@ -3,6 +3,58 @@ import { defineStore } from 'pinia'
 import api from '@/axios.js'
 import { ref, reactive } from 'vue'
 
+// 重新建立 blocks 時，比對並還原 marked_words 狀態與 mark_id
+function restoreMarkedStates(blocks, markedWords) {
+  if (!blocks || !markedWords || markedWords.length === 0) return blocks;
+
+  // 依單字/片語長度從長到短排序，防止子字串比對衝突
+  const sortedMW = [...markedWords].sort((a, b) => b.word.length - a.word.length);
+
+  // 清理字串，只留下英數字與中日韓字元以便比對
+  const cleanStr = (str) => str.toLowerCase().replace(/[^a-zA-Z0-9\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\uAC00-\uD7AF]/g, '');
+
+  for (const mw of sortedMW) {
+    const cleanTarget = cleanStr(mw.word);
+    if (!cleanTarget) continue;
+
+    let i = 0;
+    while (i < blocks.length) {
+      let accumulatedClean = '';
+      let j = i;
+      let matchedBlocks = [];
+
+      // 開始累積連續 block 來匹配目標字串
+      while (j < blocks.length && accumulatedClean.length < cleanTarget.length) {
+        const b = blocks[j];
+        if (b.text_type === 'word') {
+          accumulatedClean += cleanStr(b.text);
+          matchedBlocks.push(b);
+        } else if (b.text_type === 'punctuation' || b.text_type === 'blank') {
+          matchedBlocks.push(b);
+        }
+        j++;
+      }
+
+      // 如果累積的內容完全符合目標，且這批 blocks 尚未被其他標記覆蓋，則套用標記
+      if (accumulatedClean === cleanTarget && matchedBlocks.length > 0) {
+        const alreadyMarked = matchedBlocks.some(b => b.marked);
+        if (!alreadyMarked) {
+          matchedBlocks.forEach(b => {
+            if (b.text_type === 'word') {
+              b.marked = true;
+              b.mark_id = mw.mark_id;
+            }
+          });
+          // 匹配成功，跳過已比對的 blocks 區間
+          i = j - 1;
+        }
+      }
+      i++;
+    }
+  }
+  return blocks;
+}
+
 export const useArticleStore = defineStore('articleStore', () => {
   // --- State ---
   const articles = reactive([])
@@ -137,8 +189,9 @@ export const useArticleStore = defineStore('articleStore', () => {
 
   // 儲存文章 (新增/更新，支援分段傳輸)
   async function saveArticle(parsedBlocks) {
-    // 更新本地 blocks
+    // 更新本地 blocks 且還原標記狀態
     if (parsedBlocks) {
+      parsedBlocks = restoreMarkedStates(parsedBlocks, selectedArticle.value.marked_words)
       selectedArticle.value.blocks = parsedBlocks
       articles[selectedIndex.value].blocks = parsedBlocks
     }
@@ -234,6 +287,29 @@ export const useArticleStore = defineStore('articleStore', () => {
       console.error('刪除文章失敗:', err.response?.data?.detail || err)
       // 可選擇將刪除失敗的文章加回去
       // loadArticles(); // 或者重新載入
+    }
+  }
+
+  // 捨棄編輯變更，重新從後端載入文章以還原狀態
+  async function discardChanges() {
+    const articleId = selectedArticle.value.id;
+    if (newArticleID_arr.includes(articleId)) {
+      // 若是全新且尚未儲存的文章，取消編輯即等於刪除該文章
+      deleteArticle();
+      return;
+    }
+
+    onloading.value = true;
+    try {
+      const response = await api.get(`/article/${articleId}`);
+      articles[selectedIndex.value] = response.data;
+      Object.assign(selectedArticle.value, response.data);
+      isEditing.value = false;
+    } catch (error) {
+      console.error('捨棄變更重新載入文章失敗:', error);
+      alert('捨棄變更失敗，請重新載入頁面');
+    } finally {
+      onloading.value = false;
     }
   }
 
@@ -570,6 +646,7 @@ export const useArticleStore = defineStore('articleStore', () => {
         createNewArticle,
         saveArticle,
         deleteArticle,
+        discardChanges,
         updateArticleContent,
         updateArticleTitle,
         addMarkedWord,

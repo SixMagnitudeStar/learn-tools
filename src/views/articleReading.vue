@@ -10,6 +10,14 @@
           <img @click="openTopicModal" class="icon" src="../assets/random.png" alt="隨機生成文章" title="隨機生成文章">
           <div class="tooltip-text">隨機一篇生成文章</div>
         </div>
+        <div class="tooltip" v-if="selectedArticle && selectedArticle.id && !isEditing">
+          <img @click="handleEditArticle" class="icon" src="../assets/edit.png" alt="編輯文章" title="編輯文章">
+          <div class="tooltip-text">編輯文章</div>
+        </div>
+        <div class="tooltip" v-else-if="selectedArticle && selectedArticle.id && isEditing">
+          <span @click="handleCancelEdit" class="icon font-bold" style="font-size: 20px; line-height: 25px; display: inline-block; cursor: pointer;" title="取消編輯">❌</span>
+          <div class="tooltip-text">取消編輯</div>
+        </div>
         <div class="tooltip">
           <img @click="handleSaveArticle" class="icon" src="../assets/check.png" alt="儲存文章" title="儲存文章">
           <div class="tooltip-text">儲存文章</div>
@@ -522,6 +530,16 @@ function handleCreateNewArticle() {
   nextTick(() => {
     editableTitle.value?.focus()
   })
+}
+
+function handleEditArticle() {
+  isEditing.value = true
+}
+
+async function handleCancelEdit() {
+  if (window.confirm('確定要捨棄未儲存的編輯嗎？')) {
+    await articleStore.discardChanges()
+  }
 }
 
 // --- Topic Modal Methods ---
