@@ -84,7 +84,8 @@
 
           <div v-if="!list.listeningMode" class="vocab-list-body">
             <ul>
-              <li v-for="(w, idx) in list.words" :key="w.id">{{ w.word }}
+              <li v-for="(w, idx) in list.words" :key="w.id">
+                <span class="vocab-word">{{ w.word }}</span>
                 <div class="tooltip">
                   <span @click="speak(w.word)" title="listening vocab">🔊</span>
                   <span class="tooltiptext">listening vocab</span>
@@ -97,10 +98,11 @@
             </ul>
           </div>
 
-          <div v-else class="parallel-div">
+          <div v-else class="parallel-div listening-lists-wrapper">
             <div class="vocab-list">
               <ul>
-                <li v-for="(w, idx) in list.listeningWords" :key="idx">{{ w.word }}
+                <li v-for="(w, idx) in list.listeningWords" :key="idx">
+                  <span class="vocab-word">{{ w.word }}</span>
                   <div class="tooltip">
                     <span @click="speak(w.word)" title="listening vocab">🔊</span>
                   </div>
@@ -109,7 +111,8 @@
             </div>
             <div class="vocab-list">
               <ul>
-                <li v-for="(w, idx) in list.playedWords" :key="idx">{{ w.word }}
+                <li v-for="(w, idx) in list.playedWords" :key="idx">
+                  <span class="vocab-word">{{ w.word }}</span>
                   <div class="tooltip">
                     <span @click="speak(w.word)" title="listening vocab">🔊</span>
                   </div>
@@ -421,16 +424,20 @@ button {
 }
 
 li {
-  height: 30px;
+  min-height: 30px;
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 4px 0;
 }
 
 ul {
   list-style: none;
   padding: 0;
   margin: 0;
+  width: 100%;
 }
 
 #ELP-page {
@@ -439,6 +446,9 @@ ul {
   border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   margin-top: 5vw;
+  width: 960px;
+  max-width: 95vw;
+  box-sizing: border-box;
 }
 
 .bin {
@@ -494,8 +504,9 @@ ul {
 .vocab-lists-container {
   margin-top: 12px;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 15px;
+  justify-content: center;
 }
 
 .vocab-list-header {
@@ -510,6 +521,9 @@ ul {
   border-radius: 8px;
   background: #fff;
   position: relative;
+  width: 100%;
+  max-width: 290px;
+  box-sizing: border-box;
 }
 
 .vocab-list-body ul {
@@ -520,7 +534,8 @@ ul {
 
 .vocab-list{
   display:block;
-  width: 140px;
+  flex: 1;
+  min-width: 0;
 }
 
 .list-name-wrapper{
@@ -539,6 +554,16 @@ ul {
   align-items: center;
   gap: 5px;
   margin: 8px 0;
+}
+
+.vocab-list-controls input {
+  margin-bottom: 0;
+  flex: 1;
+  min-width: 0;
+}
+
+.vocab-list-controls button {
+  padding: 10px 15px;
 }
 
 .mode-toggle-btn {
@@ -562,5 +587,21 @@ ul {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+
+.listening-lists-wrapper {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+}
+
+.vocab-word {
+  flex: 1;
+  text-align: left;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 </style>
