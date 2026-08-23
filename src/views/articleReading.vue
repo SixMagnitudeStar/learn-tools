@@ -122,8 +122,15 @@
       </div>
       
       <!-- Hover Translation Tooltip -->
-      <div v-if="hoverTooltip.show" class="translation-tooltip" :style="tooltipStyle">
-        {{ hoverTooltip.text }}
+      <div 
+        v-if="hoverTooltip.show" 
+        class="translation-tooltip" 
+        :style="tooltipStyle"
+        @mouseenter="clearHideTimeout"
+        @mouseleave="startHideTimeout"
+      >
+        <span v-if="hoverTooltip.text">{{ hoverTooltip.text }}</span>
+        <span @click="speak(hoverTooltip.word)" class="speaker-icon" title="聆聽發音" style="margin-left: 6px;">🔊</span>
       </div>
       
       <div v-if="showCancelConfirmation" class="cancel-confirmation" :style="confirmationPos" @mouseleave="showCancelConfirmation = false">
@@ -300,6 +307,7 @@ const stopResizeHeight = () => {
 const hoverTooltip = reactive({
   show: false,
   text: '',
+  word: '',
   x: 0,
   y: 0
 })
@@ -309,33 +317,48 @@ const tooltipStyle = computed(() => ({
   left: `${hoverTooltip.x}px`
 }))
 
-function getBlockTranslation(block) {
-  if (!block.marked) return null;
-  // 先用 mark_id 找，這對於選取標記（多個 blocks）最準確
-  let found = selectedArticle.value.marked_words.find(mw => mw.mark_id === block.mark_id);
-  // 如果沒找到，嘗試用文字匹配（相容舊資料或手動新增）
-  if (!found) {
-    found = selectedArticle.value.marked_words.find(mw => mw.word.trim() === block.text.trim());
+let hideTimeout = null
+
+function clearHideTimeout() {
+  if (hideTimeout) {
+    clearTimeout(hideTimeout)
+    hideTimeout = null
   }
-  return found?.translation || null;
+}
+
+function startHideTimeout() {
+  clearHideTimeout()
+  hideTimeout = setTimeout(() => {
+    hoverTooltip.show = false
+  }, 200)
 }
 
 function handleMouseEnter(block, event) {
-  if (block.marked) {
-    const translation = getBlockTranslation(block);
-    if (translation) {
-      const rect = event.target.getBoundingClientRect();
-      hoverTooltip.text = translation;
-      // 將 tooltip 置於單字上方中央
-      hoverTooltip.x = rect.left + window.scrollX + (rect.width / 2);
-      hoverTooltip.y = rect.top + window.scrollY - 10;
-      hoverTooltip.show = true;
+  if (block.text_type === 'word') {
+    clearHideTimeout()
+    
+    // 先用 mark_id 找，這對於選取標記（多個 blocks）最準確
+    let found = null;
+    if (block.marked) {
+      found = selectedArticle.value.marked_words.find(mw => mw.mark_id === block.mark_id);
+      // 如果沒找到，嘗試用文字匹配（相容舊資料或手動新增）
+      if (!found) {
+        found = selectedArticle.value.marked_words.find(mw => mw.word.trim() === block.text.trim());
+      }
     }
+
+    const rect = event.target.getBoundingClientRect();
+    hoverTooltip.text = found?.translation || '';
+    hoverTooltip.word = found?.word || block.text.replace(/<[^>]*>/g, '').trim();
+    // 將 tooltip 置於單字上方中央
+    hoverTooltip.x = rect.left + window.scrollX + (rect.width / 2);
+    hoverTooltip.y = rect.top + window.scrollY - 10;
+    hoverTooltip.show = true;
   }
 }
 
 function handleMouseLeave() {
-  hoverTooltip.show = false;
+  startHideTimeout()
 }
 
 const toast = reactive({
@@ -1370,7 +1393,7 @@ input:checked + .slider:before {
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 14px;
-  pointer-events: none;
+  pointer-events: auto; /* 允許滑鼠與 tooltip 互動 */
   transform: translateX(-50%);
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
   white-space: nowrap;
@@ -1447,11 +1470,14 @@ input:checked + .slider:before {
   padding: 6px 12px;
   border-radius: 6px;
   font-size: 14px;
-  pointer-events: none; /* 避免擋住滑鼠事件 */
+  pointer-events: auto; /* 允許滑鼠與 tooltip 互動 */
   transform: translate(-50%, -100%); /* 向上位移並水平居中 */
   white-space: nowrap;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   transition: opacity 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .translation-tooltip::after {
