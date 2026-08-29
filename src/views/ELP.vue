@@ -85,7 +85,11 @@
           <div v-if="!list.listeningMode" class="vocab-list-body">
             <ul>
               <li v-for="(w, idx) in list.words" :key="w.id">
-                <span class="vocab-word">{{ w.word }}</span>
+                <span class="vocab-word">
+                  {{ w.word }}
+                  <span v-if="w.translation" class="translation-text">: {{ w.translation }}</span>
+                </span>
+                <img @click="editVocabTranslation(list, w)" class="edit-icon" src="@/assets/edit.png" title="編輯翻譯" style="width: 14px; height: 14px; cursor: pointer; vertical-align: middle; margin-left: 4px; margin-right: 4px;">
                 <div class="tooltip">
                   <span @click="speak(w.word)" title="listening vocab">🔊</span>
                   <span class="tooltiptext">listening vocab</span>
@@ -131,6 +135,25 @@
       @close="isModalVisible = false"
       @submit="handleModalSubmit"
     />
+    <TranslationModal 
+      :visible="translationModalState.visible"
+      :word="translationModalState.word"
+      :translation="translationModalState.translation"
+      @close="translationModalState.visible = false"
+      @submit="handleTranslationSubmit"
+    />
+
+    <!-- Toast Notification -->
+    <Transition name="toast">
+      <div v-if="toast.show" 
+           :class="['toast-container', toast.type === 'success' ? 'toast-success' : 'toast-error']">
+        <div class="toast-content">
+          <span v-if="toast.type === 'success'" class="toast-icon">✓</span>
+          <span v-else class="toast-icon">✕</span>
+          <span class="toast-message">{{ toast.message }}</span>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -140,6 +163,7 @@ import api from '@/axios.js'
 import { useArticleStore } from '@/stores/articleStore.js'
 import { storeToRefs } from 'pinia'
 import ArticleSelectionModal from '@/components/ArticleSelectionModal.vue'
+import TranslationModal from '@/components/TranslationModal.vue'
 import { speakText } from '@/utils/tts.js'
 
 defineOptions({
@@ -148,7 +172,8 @@ defineOptions({
 
 export default {
   components: {
-    ArticleSelectionModal
+    ArticleSelectionModal,
+    TranslationModal
   },
   setup() {
     const mode = ref(1)
@@ -361,13 +386,65 @@ export default {
 
           try {
             const res = await api.post(`/vocabulary_lists/${targetList.value.id}/words`, {
-              word: item.word
+              word: item.word,
+              translation: item.translation
             });
             targetList.value.words.push(res.data.word);
             console.log(`單字 "${item.word}" 已添加到後端`);
           } catch (err) {
             console.error(`添加單字 "${item.word}" 失敗`, err);
           }
+      }
+    }
+
+    const translationModalState = reactive({
+      visible: false,
+      word: '',
+      translation: '',
+      list: null
+    })
+
+    const editVocabTranslation = (list, wordObj) => {
+      translationModalState.word = wordObj.word
+      translationModalState.translation = wordObj.translation || ''
+      translationModalState.list = list
+      translationModalState.visible = true
+    }
+
+    const toast = reactive({
+      show: false,
+      message: '',
+      type: 'success'
+    })
+
+    function showToast(message, type = 'success') {
+      toast.message = message
+      toast.type = type
+      toast.show = true
+      setTimeout(() => {
+        toast.show = false
+      }, 3000)
+    }
+
+    const handleTranslationSubmit = async (newTranslation) => {
+      translationModalState.visible = false
+      try {
+        await api.put('/markedword/translation', {
+          word: translationModalState.word,
+          translation: newTranslation
+        });
+        
+        if (translationModalState.list) {
+          translationModalState.list.words.forEach(w => {
+            if (w.word === translationModalState.word) {
+              w.translation = newTranslation;
+            }
+          });
+        }
+        showToast("翻譯更新成功", "success");
+      } catch (err) {
+        console.error("更新翻譯失敗:", err);
+        showToast("更新翻譯失敗", "error");
       }
     }
 
@@ -393,6 +470,10 @@ export default {
       openArticleSelectionModal,
       handleModalSubmit,
       articles,
+      editVocabTranslation,
+      translationModalState,
+      handleTranslationSubmit,
+      toast,
     }
   }
 }
@@ -603,5 +684,62 @@ ul {
   word-break: break-word;
   overflow-wrap: break-word;
   white-space: normal;
+}
+
+/* Toast Styles */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.toast-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.toast-error {
+  background-color: #f44336;
+  color: white;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.toast-icon {
+  font-size: 1.2em;
+}
+
+/* Toast Animation */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.translation-text {
+  margin-left: 8px;
+  color: #555;
+  font-style: italic;
 }
 </style>

@@ -11,6 +11,14 @@
         <label>背景顏色</label>
         <input type="color" />
       </div>
+      <div class="form-group">
+        <label>頁面風格</label>
+        <select v-model="authStore.theme" class="gender-select">
+          <option value="default">預設背景 (動態風格)</option>
+          <option value="beach">陽光海灘 (photo_beach)</option>
+          <option value="minimalist">極簡風格 (無背景圖)</option>
+        </select>
+      </div>
     </section>
 
     <!-- 會員資訊 -->
@@ -215,11 +223,14 @@ input[type="color"] {
 import { ref, onMounted, computed } from 'vue';
 import api from '@/axios.js';
 import { getTtsSettings, saveTtsSettings, speakText } from '@/utils/tts.js';
+import { useAuthStore } from '@/auth.js';
 
 /* global defineOptions */
 defineOptions({
   name: 'personalSetting'
 });
+
+const authStore = useAuthStore();
 
 const userData = ref({
   email: '',

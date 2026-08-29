@@ -5,7 +5,8 @@ import { jwtDecode } from 'jwt-decode' // Import jwtDecode
 export const useAuthStore = defineStore('auth', {
   state: () => ({
     token: localStorage.getItem('token') || null,
-    isAdmin: false // Add isAdmin state
+    isAdmin: false, // Add isAdmin state
+    theme: 'default'
   }),
   getters: {
     isLoggedIn: (state) => !!state.token,

@@ -335,6 +335,24 @@ export const useArticleStore = defineStore('articleStore', () => {
 
   // --- Marked Words Actions ---
 
+  async function updateWordTranslation(word, newTranslation) {
+    try {
+      const response = await api.put('/markedword/translation', {
+        word: word,
+        translation: newTranslation
+      });
+      selectedArticle.value.marked_words.forEach(mw => {
+        if (mw.word === word) {
+          mw.translation = newTranslation;
+        }
+      });
+      return response.data;
+    } catch (err) {
+      console.error("更新標記單字翻譯失敗:", err);
+      throw err;
+    }
+  }
+
   async function addMarkedWord(word, articleId) {
     const body = {
       article_id: articleId,
@@ -617,17 +635,22 @@ export const useArticleStore = defineStore('articleStore', () => {
 
 
       async function getMarkedWordsFromArticles(articleIds) {
-        console.log('Simulating fetching marked words for article IDs:', articleIds);
-        // Simulate API call by filtering local data
+        console.log('Fetching marked words for article IDs:', articleIds);
         const words = articles
           .filter(article => articleIds.includes(article.id))
           .flatMap(article => article.marked_words || []);
         
-        // Remove duplicates
-        const uniqueWords = [...new Set(words.map(w => w.word))];
+        const wordMap = new Map();
+        words.forEach(w => {
+          if (!wordMap.has(w.word) || (!wordMap.get(w.word).translation && w.translation)) {
+            wordMap.set(w.word, w);
+          }
+        });
         
-        console.log('Found unique words:', uniqueWords);
-        return uniqueWords.map(word => ({ word })); // Return in a consistent format
+        return Array.from(wordMap.values()).map(w => ({
+          word: w.word,
+          translation: w.translation
+        }));
       }
     
     
@@ -650,6 +673,7 @@ export const useArticleStore = defineStore('articleStore', () => {
         updateArticleContent,
         updateArticleTitle,
         addMarkedWord,
+        updateWordTranslation,
         deleteMarkedWord,
         toggleBlockMark,
         markSelection,
