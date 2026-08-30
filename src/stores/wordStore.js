@@ -34,6 +34,23 @@ export const useWordStore = defineStore('wordStore', {
       } catch (error) {
         console.error('刪除單字失敗', error)
       }
+    },
+
+    async updateWordTranslation(word, newTranslation) {
+      try {
+        await api.put('/markedword/translation', {
+          word: word,
+          translation: newTranslation
+        })
+        this.wordList.forEach(w => {
+          if (w.word === word) {
+            w.translation = newTranslation
+          }
+        })
+      } catch (error) {
+        console.error('更新翻譯失敗', error)
+        throw error
+      }
     }
   }
 })

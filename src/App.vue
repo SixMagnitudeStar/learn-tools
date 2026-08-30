@@ -32,6 +32,16 @@ watch(() => route.path, (to, from) => {
     transitionName.value = 'zoom'
   }
 }, { immediate: true })
+
+// 監聽頁面風格主題設定
+watch(() => authStore.theme, (newTheme) => {
+  document.body.classList.remove('theme-beach', 'theme-minimalist')
+  if (newTheme === 'beach') {
+    document.body.classList.add('theme-beach')
+  } else if (newTheme === 'minimalist') {
+    document.body.classList.add('theme-minimalist')
+  }
+}, { immediate: true })
 </script>
 
 <style>
@@ -177,4 +187,14 @@ body{
   opacity: 0;
 }
 
+/* 頁面風格主題樣式 */
+body.theme-beach {
+  background-image: url('@/assets/photo_beach.avif') !important;
+  background-color: lightgray !important;
+}
+
+body.theme-minimalist {
+  background-image: none !important;
+  background-color: #f0f0f0 !important; /* 極簡淺灰背景 */
+}
 </style>

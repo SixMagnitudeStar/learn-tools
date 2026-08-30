@@ -52,6 +52,7 @@
         <div class="word-main">
           <span class="word-text">
             {{ word.word }}
+            <img @click="editWordTranslation(word)" class="edit-icon" src="@/assets/edit.png" title="編輯翻譯" style="width: 14px; height: 14px; cursor: pointer; margin-left: 6px; vertical-align: middle;">
             <span v-if="showTranslations && word.translation" class="translation-text">: {{ word.translation }}</span>
           </span>
           <span class="date-added">{{ formatDate(word.marked_time) }}</span>
@@ -84,11 +85,32 @@
             :key="word.id"
           >
             {{ word.word }}
+            <img @click="editWordTranslation(word)" class="edit-icon" src="@/assets/edit.png" title="編輯翻譯" style="width: 14px; height: 14px; cursor: pointer; margin-left: 6px; vertical-align: middle;">
             <span v-if="word.translation" class="translation-text">: {{ word.translation }}</span>
           </li>
         </ul>
       </div>
     </div>
+    
+    <TranslationModal 
+      :visible="translationModalState.visible"
+      :word="translationModalState.word"
+      :translation="translationModalState.translation"
+      @close="translationModalState.visible = false"
+      @submit="handleTranslationSubmit"
+    />
+
+    <!-- Toast Notification -->
+    <Transition name="toast">
+      <div v-if="toast.show" 
+           :class="['toast-container', toast.type === 'success' ? 'toast-success' : 'toast-error']">
+        <div class="toast-content">
+          <span v-if="toast.type === 'success'" class="toast-icon">✓</span>
+          <span v-else class="toast-icon">✕</span>
+          <span class="toast-message">{{ toast.message }}</span>
+        </div>
+      </div>
+    </Transition>
   </div>
 </template>
 
@@ -101,8 +123,9 @@
 */
 
 
-import { ref, computed, onMounted, defineOptions } from 'vue'
+import { ref, computed, onMounted, defineOptions, reactive } from 'vue'
 import { useWordStore } from '@/stores/wordStore'
+import TranslationModal from '@/components/TranslationModal.vue'
 //import api from '@/axios.js'
 
 function formatDate(isoString) {
@@ -261,6 +284,45 @@ function addWord() {
 // 🔥 刪除字
 async function deleteWord(id) {
   store.deleteWordById(id)
+}
+
+const translationModalState = ref({
+  visible: false,
+  word: '',
+  translation: ''
+})
+
+const editWordTranslation = (wordObj) => {
+  translationModalState.value = {
+    visible: true,
+    word: wordObj.word,
+    translation: wordObj.translation || ''
+  }
+}
+
+const toast = reactive({
+  show: false,
+  message: '',
+  type: 'success'
+})
+
+function showToast(message, type = 'success') {
+  toast.message = message
+  toast.type = type
+  toast.show = true
+  setTimeout(() => {
+    toast.show = false
+  }, 3000)
+}
+
+const handleTranslationSubmit = async (newTranslation) => {
+  translationModalState.value.visible = false
+  try {
+    await store.updateWordTranslation(translationModalState.value.word, newTranslation)
+    showToast("翻譯更新成功", "success")
+  } catch (err) {
+    showToast("更新翻譯失敗", "error")
+  }
 }
 
 // async function deleteMarkedWordById(id) {
@@ -492,5 +554,56 @@ async function deleteWord(id) {
 
 .delete-btn:active {
   transform: scale(0.95);
+}
+
+/* Toast Styles */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  padding: 12px 24px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+}
+
+.toast-success {
+  background-color: #4caf50;
+  color: white;
+}
+
+.toast-error {
+  background-color: #f44336;
+  color: white;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.toast-icon {
+  font-size: 1.2em;
+}
+
+/* Toast Animation */
+.toast-enter-active,
+.toast-leave-active {
+  transition: all 0.3s ease;
+}
+
+.toast-enter-from {
+  opacity: 0;
+  transform: translate(-50%, -20px);
+}
+
+.toast-leave-to {
+  opacity: 0;
+  transform: translate(-50%, -20px);
 }
 </style>

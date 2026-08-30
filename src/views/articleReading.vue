@@ -168,6 +168,7 @@
                   <div class="action-icons">
                     <img @click="articleStore.deleteMarkedWord(word)" class="icon-btn remove-icon" src="../assets/bin2.png" title="刪除單字">
                     <span @click="speak(word.word)" class="speaker-icon" title="聆聽發音">🔊</span>
+                    <img @click="editWordTranslation(word)" class="icon-btn edit-icon" src="../assets/edit.png" title="編輯翻譯">
                   </div>
                   <div class="word-text">
                     <span class="word-en">{{word.word}}</span>
@@ -200,6 +201,13 @@
         </div>
       </div>
     </Transition>
+    <TranslationModal 
+      :visible="translationModalState.visible"
+      :word="translationModalState.word"
+      :translation="translationModalState.translation"
+      @close="translationModalState.visible = false"
+      @submit="handleTranslationSubmit"
+    />
   </div>
 </template>
 
@@ -208,6 +216,7 @@ import { ref, computed, onMounted, onUnmounted, watch, nextTick, defineOptions, 
 import { storeToRefs } from 'pinia'
 import { useArticleStore } from '@/stores/articleStore.js'
 import { speakText } from '@/utils/tts.js'
+import TranslationModal from '@/components/TranslationModal.vue'
 
 defineOptions({
   name: 'articleReading'
@@ -397,8 +406,27 @@ const speak = (text) => {
   const targetLang = selectedArticle.value?.language || 'en';
   speakText(text, targetLang);
 };
+const translationModalState = reactive({
+  visible: false,
+  word: '',
+  translation: ''
+})
 
+const editWordTranslation = (wordObj) => {
+  translationModalState.word = wordObj.word
+  translationModalState.translation = wordObj.translation || ''
+  translationModalState.visible = true
+}
 
+const handleTranslationSubmit = async (newTranslation) => {
+  translationModalState.visible = false
+  try {
+    await articleStore.updateWordTranslation(translationModalState.word, newTranslation)
+    showToast("翻譯更新成功", "success")
+  } catch (err) {
+    showToast("更新翻譯失敗", "error")
+  }
+}
 // --- Lifecycle Hooks ---
 onMounted(() => {
   document.body.classList.add('articleReading-bg')
@@ -1046,7 +1074,6 @@ body.articleReading-bg {
 
 .icon-btn:hover, .speaker-icon:hover {
   filter: brightness(0.8);
-  transform: scale(1.1);
 }
 
 .word-text {
